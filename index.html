@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanguardia - Avaliação DISC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg viewBox="0 0 100 80" class="logo-icon">
+                    <polygon points="50,5 30,25 40,25 50,15 60,25 70,25" fill="#1e4b8e"/>
+                    <polygon points="20,30 50,30 35,50" fill="#1e4b8e"/>
+                    <polygon points="80,30 50,30 65,50" fill="#1e4b8e"/>
+                    <polygon points="35,55 65,55 50,75" fill="#1e4b8e"/>
+                </svg>
+                <span class="logo-text">VANGUARDIA</span>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-link active" data-page="home">Início</a>
+                <a href="#" class="nav-link" data-page="assessment">Avaliação</a>
+                <a href="#" class="nav-link" data-page="results">Resultados</a>
+                <a href="#" class="nav-link" data-page="admin">Admin</a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Page -->
+            <section id="page-home" class="page active">
+                <div class="hero">
+                    <h1>Avaliação de Perfil DISC</h1>
+                    <p class="hero-subtitle">Descubra o perfil comportamental dos seus candidatos e colaboradores</p>
+                    <button class="btn btn-primary btn-large" onclick="showPage('assessment')">
+                        Iniciar Avaliação
+                    </button>
+                </div>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon dominance">D</div>
+                        <h3>Dominância</h3>
+                        <p>Orientado a resultados, competitivo, direto e decisivo</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon influence">I</div>
+                        <h3>Influência</h3>
+                        <p>Comunicativo, entusiasta, otimista e colaborativo</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon steadiness">S</div>
+                        <h3>Estabilidade</h3>
+                        <p>Paciente, confiável, metódico e bom ouvinte</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon conscientiousness">C</div>
+                        <h3>Conformidade</h3>
+                        <p>Analítico, preciso, sistemático e detalhista</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Assessment Page -->
+            <section id="page-assessment" class="page">
+                <div class="assessment-container">
+                    <!-- Candidate Info Form -->
+                    <div id="candidate-form" class="form-section">
+                        <h2>Informações do Candidato</h2>
+                        <form id="candidateInfoForm">
+                            <div class="form-group">
+                                <label for="candidateName">Nome Completo *</label>
+                                <input type="text" id="candidateName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="candidateEmail">E-mail *</label>
+                                <input type="email" id="candidateEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="candidatePosition">Cargo Pretendido</label>
+                                <input type="text" id="candidatePosition">
+                            </div>
+                            <div class="form-group">
+                                <label for="candidateDepartment">Departamento</label>
+                                <select id="candidateDepartment">
+                                    <option value="">Selecione...</option>
+                                    <option value="comercial">Comercial</option>
+                                    <option value="tecnologia">Tecnologia</option>
+                                    <option value="rh">Recursos Humanos</option>
+                                    <option value="financeiro">Financeiro</option>
+                                    <option value="operacoes">Operações</option>
+                                    <option value="marketing">Marketing</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Começar Avaliação</button>
+                        </form>
+                    </div>
+
+                    <!-- Questions Section -->
+                    <div id="questions-section" class="questions-section hidden">
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="progress-text" id="progressText">Pergunta 1 de 28</span>
+                        </div>
+
+                        <div id="question-container" class="question-container">
+                            <!-- Questions will be dynamically inserted here -->
+                        </div>
+
+                        <div class="navigation-buttons">
+                            <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()" disabled>
+                                ← Anterior
+                            </button>
+                            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">
+                                Próxima →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Page -->
+            <section id="page-results" class="page">
+                <div class="results-container">
+                    <div id="no-results" class="no-results">
+                        <h2>Nenhum resultado disponível</h2>
+                        <p>Complete uma avaliação para ver seus resultados aqui.</p>
+                        <button class="btn btn-primary" onclick="showPage('assessment')">Fazer Avaliação</button>
+                    </div>
+
+                    <div id="results-content" class="results-content hidden">
+                        <div class="results-header">
+                            <h2>Resultado da Avaliação DISC</h2>
+                            <p id="resultCandidateName"></p>
+                            <p id="resultDate"></p>
+                        </div>
+
+                        <div class="chart-section">
+                            <canvas id="discChart"></canvas>
+                        </div>
+
+                        <div class="scores-grid">
+                            <div class="score-card dominance">
+                                <div class="score-letter">D</div>
+                                <div class="score-value" id="scoreD">0%</div>
+                                <div class="score-label">Dominância</div>
+                            </div>
+                            <div class="score-card influence">
+                                <div class="score-letter">I</div>
+                                <div class="score-value" id="scoreI">0%</div>
+                                <div class="score-label">Influência</div>
+                            </div>
+                            <div class="score-card steadiness">
+                                <div class="score-letter">S</div>
+                                <div class="score-value" id="scoreS">0%</div>
+                                <div class="score-label">Estabilidade</div>
+                            </div>
+                            <div class="score-card conscientiousness">
+                                <div class="score-letter">C</div>
+                                <div class="score-value" id="scoreC">0%</div>
+                                <div class="score-label">Conformidade</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3>Perfil Predominante: <span id="dominantProfile"></span></h3>
+                            <div id="profileDescription" class="profile-description"></div>
+                        </div>
+
+                        <div class="characteristics-section">
+                            <div class="char-column">
+                                <h4>Pontos Fortes</h4>
+                                <ul id="strengths"></ul>
+                            </div>
+                            <div class="char-column">
+                                <h4>Áreas de Desenvolvimento</h4>
+                                <ul id="improvements"></ul>
+                            </div>
+                        </div>
+
+                        <div class="recommendations-section">
+                            <h4>Recomendações para o Ambiente de Trabalho</h4>
+                            <div id="recommendations"></div>
+                        </div>
+
+                        <div class="actions-section">
+                            <button class="btn btn-secondary" onclick="printResults()">
+                                📄 Imprimir Relatório
+                            </button>
+                            <button class="btn btn-primary" onclick="downloadPDF()">
+                                ⬇️ Baixar PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Page -->
+            <section id="page-admin" class="page">
+                <div class="admin-container">
+                    <h2>Painel Administrativo</h2>
+
+                    <div class="admin-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalAssessments">0</div>
+                            <div class="stat-label">Avaliações Realizadas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgD">0%</div>
+                            <div class="stat-label">Média Dominância</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgI">0%</div>
+                            <div class="stat-label">Média Influência</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgS">0%</div>
+                            <div class="stat-label">Média Estabilidade</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgC">0%</div>
+                            <div class="stat-label">Média Conformidade</div>
+                        </div>
+                    </div>
+
+                    <div class="admin-table-section">
+                        <h3>Histórico de Avaliações</h3>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Nome</th>
+                                    <th>E-mail</th>
+                                    <th>Cargo</th>
+                                    <th>D</th>
+                                    <th>I</th>
+                                    <th>S</th>
+                                    <th>C</th>
+                                    <th>Perfil</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assessmentsTable">
+                                <!-- Data will be inserted dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="admin-actions">
+                        <button class="btn btn-secondary" onclick="exportToCSV()">
+                            📊 Exportar CSV
+                        </button>
+                        <button class="btn btn-danger" onclick="clearAllData()">
+                            🗑️ Limpar Dados
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Vanguardia - Sistema de Avaliação DISC</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="questions.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
