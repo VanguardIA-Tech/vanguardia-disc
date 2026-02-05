@@ -20,11 +20,9 @@
                 </svg>
                 <span class="logo-text">VANGUARDIA</span>
             </div>
-            <nav class="nav">
+            <nav class="nav" id="publicNav">
                 <a href="#" class="nav-link active" data-page="home">Início</a>
                 <a href="#" class="nav-link" data-page="assessment">Avaliação</a>
-                <a href="#" class="nav-link" data-page="results">Resultados</a>
-                <a href="#" class="nav-link" data-page="admin">Admin</a>
             </nav>
         </header>
 
@@ -34,7 +32,7 @@
             <section id="page-home" class="page active">
                 <div class="hero">
                     <h1>Avaliação de Perfil DISC</h1>
-                    <p class="hero-subtitle">Descubra o perfil comportamental dos seus candidatos e colaboradores</p>
+                    <p class="hero-subtitle">Descubra seu perfil comportamental</p>
                     <button class="btn btn-primary btn-large" onclick="showPage('assessment')">
                         Iniciar Avaliação
                     </button>
@@ -80,6 +78,10 @@
                                 <input type="email" id="candidateEmail" required>
                             </div>
                             <div class="form-group">
+                                <label for="candidatePhone">Telefone</label>
+                                <input type="tel" id="candidatePhone" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="form-group">
                                 <label for="candidatePosition">Cargo Pretendido</label>
                                 <input type="text" id="candidatePosition">
                             </div>
@@ -93,6 +95,8 @@
                                     <option value="financeiro">Financeiro</option>
                                     <option value="operacoes">Operações</option>
                                     <option value="marketing">Marketing</option>
+                                    <option value="administrativo">Administrativo</option>
+                                    <option value="logistica">Logística</option>
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-primary">Começar Avaliação</button>
@@ -124,7 +128,7 @@
                 </div>
             </section>
 
-            <!-- Results Page -->
+            <!-- Results Page (for candidates after completing) -->
             <section id="page-results" class="page">
                 <div class="results-container">
                     <div id="no-results" class="no-results">
@@ -188,22 +192,61 @@
                             <div id="recommendations"></div>
                         </div>
 
-                        <div class="actions-section">
-                            <button class="btn btn-secondary" onclick="printResults()">
-                                📄 Imprimir Relatório
-                            </button>
-                            <button class="btn btn-primary" onclick="downloadPDF()">
-                                ⬇️ Baixar PDF
-                            </button>
+                        <div class="thank-you-section">
+                            <div class="thank-you-card">
+                                <h3>Obrigado por completar a avaliação!</h3>
+                                <p>Seus dados foram enviados com sucesso para a equipe de RH da Vanguardia.</p>
+                                <button class="btn btn-primary" onclick="location.reload()">Nova Avaliação</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Admin Page -->
+            <!-- Admin Login Page -->
+            <section id="page-admin-login" class="page">
+                <div class="login-container">
+                    <div class="login-card">
+                        <div class="login-header">
+                            <svg viewBox="0 0 100 80" class="login-logo">
+                                <polygon points="50,5 30,25 40,25 50,15 60,25 70,25" fill="#1e4b8e"/>
+                                <polygon points="20,30 50,30 35,50" fill="#1e4b8e"/>
+                                <polygon points="80,30 50,30 65,50" fill="#1e4b8e"/>
+                                <polygon points="35,55 65,55 50,75" fill="#1e4b8e"/>
+                            </svg>
+                            <h2>Acesso Administrativo</h2>
+                            <p>Digite suas credenciais para acessar o painel</p>
+                        </div>
+                        <form id="adminLoginForm">
+                            <div class="form-group">
+                                <label for="adminUser">Usuário</label>
+                                <input type="text" id="adminUser" required placeholder="admin">
+                            </div>
+                            <div class="form-group">
+                                <label for="adminPassword">Senha</label>
+                                <input type="password" id="adminPassword" required placeholder="••••••••">
+                            </div>
+                            <div id="loginError" class="login-error hidden">
+                                Usuário ou senha incorretos
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+                        </form>
+                        <div class="login-footer">
+                            <a href="#" onclick="showPage('home'); return false;">← Voltar ao início</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Dashboard Page -->
             <section id="page-admin" class="page">
                 <div class="admin-container">
-                    <h2>Painel Administrativo</h2>
+                    <div class="admin-header">
+                        <h2>Painel Administrativo</h2>
+                        <button class="btn btn-secondary" onclick="adminLogout()">
+                            Sair
+                        </button>
+                    </div>
 
                     <div class="admin-stats">
                         <div class="stat-card">
@@ -228,15 +271,40 @@
                         </div>
                     </div>
 
+                    <div class="admin-actions-top">
+                        <button class="btn btn-primary" onclick="exportToExcel()">
+                            📊 Exportar Excel
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportToCSV()">
+                            📄 Exportar CSV
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshData()">
+                            🔄 Atualizar Dados
+                        </button>
+                    </div>
+
+                    <div class="admin-filters">
+                        <div class="filter-group">
+                            <label>Filtrar por período:</label>
+                            <input type="date" id="filterDateStart">
+                            <span>até</span>
+                            <input type="date" id="filterDateEnd">
+                            <button class="btn btn-secondary btn-small" onclick="applyFilters()">Filtrar</button>
+                            <button class="btn btn-secondary btn-small" onclick="clearFilters()">Limpar</button>
+                        </div>
+                    </div>
+
                     <div class="admin-table-section">
                         <h3>Histórico de Avaliações</h3>
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Data</th>
+                                    <th>Data/Hora</th>
                                     <th>Nome</th>
                                     <th>E-mail</th>
+                                    <th>Telefone</th>
                                     <th>Cargo</th>
+                                    <th>Depto</th>
                                     <th>D</th>
                                     <th>I</th>
                                     <th>S</th>
@@ -249,15 +317,89 @@
                                 <!-- Data will be inserted dynamically -->
                             </tbody>
                         </table>
+                        <div id="noDataMessage" class="no-data-message hidden">
+                            Nenhuma avaliação encontrada.
+                        </div>
                     </div>
 
-                    <div class="admin-actions">
-                        <button class="btn btn-secondary" onclick="exportToCSV()">
-                            📊 Exportar CSV
-                        </button>
+                    <div class="admin-actions-bottom">
                         <button class="btn btn-danger" onclick="clearAllData()">
-                            🗑️ Limpar Dados
+                            🗑️ Limpar Todos os Dados
                         </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin View Single Result -->
+            <section id="page-admin-view" class="page">
+                <div class="results-container">
+                    <div class="admin-view-header">
+                        <button class="btn btn-secondary" onclick="showPage('admin')">← Voltar ao Painel</button>
+                    </div>
+                    <div id="admin-results-content" class="results-content">
+                        <div class="results-header">
+                            <h2>Detalhes da Avaliação</h2>
+                            <p id="adminResultCandidateName"></p>
+                            <p id="adminResultEmail"></p>
+                            <p id="adminResultDate"></p>
+                        </div>
+
+                        <div class="chart-section">
+                            <canvas id="adminDiscChart"></canvas>
+                        </div>
+
+                        <div class="scores-grid">
+                            <div class="score-card dominance">
+                                <div class="score-letter">D</div>
+                                <div class="score-value" id="adminScoreD">0%</div>
+                                <div class="score-label">Dominância</div>
+                            </div>
+                            <div class="score-card influence">
+                                <div class="score-letter">I</div>
+                                <div class="score-value" id="adminScoreI">0%</div>
+                                <div class="score-label">Influência</div>
+                            </div>
+                            <div class="score-card steadiness">
+                                <div class="score-letter">S</div>
+                                <div class="score-value" id="adminScoreS">0%</div>
+                                <div class="score-label">Estabilidade</div>
+                            </div>
+                            <div class="score-card conscientiousness">
+                                <div class="score-letter">C</div>
+                                <div class="score-value" id="adminScoreC">0%</div>
+                                <div class="score-label">Conformidade</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3>Perfil Predominante: <span id="adminDominantProfile"></span></h3>
+                            <div id="adminProfileDescription" class="profile-description"></div>
+                        </div>
+
+                        <div class="characteristics-section">
+                            <div class="char-column">
+                                <h4>Pontos Fortes</h4>
+                                <ul id="adminStrengths"></ul>
+                            </div>
+                            <div class="char-column">
+                                <h4>Áreas de Desenvolvimento</h4>
+                                <ul id="adminImprovements"></ul>
+                            </div>
+                        </div>
+
+                        <div class="recommendations-section">
+                            <h4>Recomendações para o Ambiente de Trabalho</h4>
+                            <div id="adminRecommendations"></div>
+                        </div>
+
+                        <div class="actions-section">
+                            <button class="btn btn-secondary" onclick="printAdminResults()">
+                                📄 Imprimir Relatório
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteResult()">
+                                🗑️ Excluir Avaliação
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -265,11 +407,13 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>&copy; 2024 Vanguardia - Sistema de Avaliação DISC</p>
+            <p>&copy; 2024 Vanguardia Grupo - Sistema de Avaliação DISC</p>
+            <a href="#" class="admin-link" onclick="showPage('admin-login'); return false;">Área Administrativa</a>
         </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="questions.js"></script>
     <script src="app.js"></script>
 </body>
