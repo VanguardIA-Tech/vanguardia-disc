@@ -1,12 +1,18 @@
 // DISC Assessment Application for Vanguardia
-// Version 2.0 - With Admin Authentication
+// Version 3.0 - With Supabase Integration
 
 // ==========================================
-// CONFIGURATION
+// SUPABASE CONFIGURATION
+// ==========================================
+const SUPABASE_URL = 'https://alwpwpufxwokruysmlln.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsd3B3cHVmeHdva3J1eXNtbGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjUzMzcsImV4cCI6MjA4NTkwMTMzN30.s0zW6cpjlC0m-s8wJNeVSssgXVMEZFVqc4ekgs-6l5Y';
+
+// ==========================================
+// ADMIN CONFIGURATION
 // ==========================================
 const ADMIN_CREDENTIALS = {
     username: 'admin',
-    password: 'Vanguardia@2024'  // Change this password!
+    password: 'Vanguardia@2024'
 };
 
 // ==========================================
@@ -20,6 +26,99 @@ let adminDiscChart = null;
 let isAdminLoggedIn = false;
 let currentViewingResult = null;
 let filteredResults = null;
+let allResults = [];
+
+// ==========================================
+// SUPABASE API FUNCTIONS
+// ==========================================
+async function supabaseRequest(endpoint, options = {}) {
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': options.prefer || 'return=representation'
+    };
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers: { ...headers, ...options.headers }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error('Supabase error:', error);
+            throw new Error(error.message || 'Erro na requisição');
+        }
+
+        const text = await response.text();
+        return text ? JSON.parse(text) : null;
+    } catch (error) {
+        console.error('Request error:', error);
+        throw error;
+    }
+}
+
+async function saveToSupabase(result) {
+    const data = {
+        candidate_name: result.candidate.name,
+        candidate_email: result.candidate.email,
+        candidate_phone: result.candidate.phone || null,
+        candidate_position: result.candidate.position || null,
+        candidate_department: result.candidate.department || null,
+        score_d: result.scores.D,
+        score_i: result.scores.I,
+        score_s: result.scores.S,
+        score_c: result.scores.C,
+        dominant_profile: result.dominantProfile,
+        answers: result.answers
+    };
+
+    return await supabaseRequest('disc_assessments', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+}
+
+async function fetchFromSupabase() {
+    return await supabaseRequest('disc_assessments?select=*&order=created_at.desc');
+}
+
+async function deleteFromSupabase(id) {
+    return await supabaseRequest(`disc_assessments?id=eq.${id}`, {
+        method: 'DELETE'
+    });
+}
+
+async function deleteAllFromSupabase() {
+    return await supabaseRequest('disc_assessments?id=gt.0', {
+        method: 'DELETE'
+    });
+}
+
+// Convert Supabase format to app format
+function convertSupabaseToAppFormat(record) {
+    return {
+        id: record.id,
+        date: record.created_at,
+        candidate: {
+            name: record.candidate_name,
+            email: record.candidate_email,
+            phone: record.candidate_phone || '',
+            position: record.candidate_position || '',
+            department: record.candidate_department || ''
+        },
+        scores: {
+            D: record.score_d,
+            I: record.score_i,
+            S: record.score_s,
+            C: record.score_c
+        },
+        dominantProfile: record.dominant_profile,
+        answers: record.answers || {}
+    };
+}
 
 // ==========================================
 // INITIALIZATION
@@ -228,7 +327,7 @@ function nextQuestion() {
 // ==========================================
 // FINISH AND CALCULATE RESULTS
 // ==========================================
-function finishAssessment() {
+async function finishAssessment() {
     const scores = calculateScores();
     const result = {
         id: Date.now(),
@@ -239,8 +338,19 @@ function finishAssessment() {
         answers: { ...answers }
     };
 
-    // Save result
-    saveResult(result);
+    // Show loading state
+    const nextBtn = document.getElementById('nextBtn');
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'Salvando...';
+
+    try {
+        // Save to Supabase
+        await saveToSupabase(result);
+        console.log('Resultado salvo no Supabase com sucesso!');
+    } catch (error) {
+        console.error('Erro ao salvar no Supabase:', error);
+        // Continue anyway - show results to user
+    }
 
     // Show results page
     showCandidateResults(result);
@@ -288,22 +398,27 @@ function getDominantProfile(scores) {
 }
 
 // ==========================================
-// STORAGE
+// STORAGE (now uses Supabase)
 // ==========================================
-function saveResult(result) {
-    let results = JSON.parse(localStorage.getItem('discResults') || '[]');
-    results.push(result);
-    localStorage.setItem('discResults', JSON.stringify(results));
+async function getAllResults() {
+    try {
+        const data = await fetchFromSupabase();
+        allResults = data.map(convertSupabaseToAppFormat);
+        return allResults;
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        return [];
+    }
 }
 
-function getAllResults() {
-    return JSON.parse(localStorage.getItem('discResults') || '[]');
-}
-
-function deleteResultById(id) {
-    let results = getAllResults();
-    results = results.filter(r => r.id !== id);
-    localStorage.setItem('discResults', JSON.stringify(results));
+async function deleteResultById(id) {
+    try {
+        await deleteFromSupabase(id);
+        allResults = allResults.filter(r => r.id !== id);
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        throw error;
+    }
 }
 
 // ==========================================
@@ -406,54 +521,69 @@ function resetAssessmentForm() {
     document.getElementById('candidateInfoForm').reset();
     document.getElementById('candidate-form').classList.remove('hidden');
     document.getElementById('questions-section').classList.add('hidden');
+
+    // Reset button state
+    const nextBtn = document.getElementById('nextBtn');
+    nextBtn.disabled = false;
+    nextBtn.textContent = 'Próxima →';
 }
 
 // ==========================================
 // ADMIN FUNCTIONS
 // ==========================================
-function loadAdminData() {
-    const results = filteredResults || getAllResults();
+async function loadAdminData() {
+    // Show loading
+    document.getElementById('totalAssessments').textContent = '...';
 
-    // Stats
-    document.getElementById('totalAssessments').textContent = results.length;
+    try {
+        const results = filteredResults || await getAllResults();
 
-    if (results.length > 0) {
-        const avgScores = calculateAverages(results);
-        document.getElementById('avgD').textContent = `${avgScores.D}%`;
-        document.getElementById('avgI').textContent = `${avgScores.I}%`;
-        document.getElementById('avgS').textContent = `${avgScores.S}%`;
-        document.getElementById('avgC').textContent = `${avgScores.C}%`;
+        // Stats
+        document.getElementById('totalAssessments').textContent = results.length;
 
-        // Show table, hide no data message
-        document.getElementById('noDataMessage').classList.add('hidden');
+        if (results.length > 0) {
+            const avgScores = calculateAverages(results);
+            document.getElementById('avgD').textContent = `${avgScores.D}%`;
+            document.getElementById('avgI').textContent = `${avgScores.I}%`;
+            document.getElementById('avgS').textContent = `${avgScores.S}%`;
+            document.getElementById('avgC').textContent = `${avgScores.C}%`;
 
-        // Table
-        const tbody = document.getElementById('assessmentsTable');
-        tbody.innerHTML = [...results].reverse().map(result => `
-            <tr>
-                <td>${formatDateTime(result.date)}</td>
-                <td>${escapeHtml(result.candidate.name)}</td>
-                <td>${escapeHtml(result.candidate.email)}</td>
-                <td>${escapeHtml(result.candidate.phone || '-')}</td>
-                <td>${escapeHtml(result.candidate.position || '-')}</td>
-                <td>${escapeHtml(result.candidate.department || '-')}</td>
-                <td>${result.scores.D}%</td>
-                <td>${result.scores.I}%</td>
-                <td>${result.scores.S}%</td>
-                <td>${result.scores.C}%</td>
-                <td>${profileData[result.dominantProfile].name}</td>
-                <td>
-                    <button class="btn btn-secondary" onclick="viewResult(${result.id})">Ver</button>
-                </td>
-            </tr>
-        `).join('');
-    } else {
-        document.getElementById('avgD').textContent = '0%';
-        document.getElementById('avgI').textContent = '0%';
-        document.getElementById('avgS').textContent = '0%';
-        document.getElementById('avgC').textContent = '0%';
-        document.getElementById('assessmentsTable').innerHTML = '';
+            // Show table, hide no data message
+            document.getElementById('noDataMessage').classList.add('hidden');
+
+            // Table
+            const tbody = document.getElementById('assessmentsTable');
+            tbody.innerHTML = results.map(result => `
+                <tr>
+                    <td>${formatDateTime(result.date)}</td>
+                    <td>${escapeHtml(result.candidate.name)}</td>
+                    <td>${escapeHtml(result.candidate.email)}</td>
+                    <td>${escapeHtml(result.candidate.phone || '-')}</td>
+                    <td>${escapeHtml(result.candidate.position || '-')}</td>
+                    <td>${escapeHtml(result.candidate.department || '-')}</td>
+                    <td>${result.scores.D}%</td>
+                    <td>${result.scores.I}%</td>
+                    <td>${result.scores.S}%</td>
+                    <td>${result.scores.C}%</td>
+                    <td>${profileData[result.dominantProfile].name}</td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="viewResult(${result.id})">Ver</button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            document.getElementById('avgD').textContent = '0%';
+            document.getElementById('avgI').textContent = '0%';
+            document.getElementById('avgS').textContent = '0%';
+            document.getElementById('avgC').textContent = '0%';
+            document.getElementById('assessmentsTable').innerHTML = '';
+            document.getElementById('noDataMessage').classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        document.getElementById('totalAssessments').textContent = 'Erro';
         document.getElementById('noDataMessage').classList.remove('hidden');
+        document.getElementById('noDataMessage').textContent = 'Erro ao carregar dados. Tente novamente.';
     }
 }
 
@@ -478,8 +608,7 @@ function calculateAverages(results) {
 }
 
 function viewResult(id) {
-    const results = getAllResults();
-    const result = results.find(r => r.id === id);
+    const result = allResults.find(r => r.id === id);
 
     if (result) {
         currentViewingResult = result;
@@ -518,11 +647,16 @@ function showAdminResultView(result) {
     renderChart('adminDiscChart', result.scores, 'adminDiscChart');
 }
 
-function deleteResult() {
+async function deleteResult() {
     if (currentViewingResult && confirm('Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.')) {
-        deleteResultById(currentViewingResult.id);
-        currentViewingResult = null;
-        showPage('admin');
+        try {
+            await deleteResultById(currentViewingResult.id);
+            currentViewingResult = null;
+            filteredResults = null;
+            showPage('admin');
+        } catch (error) {
+            alert('Erro ao excluir a avaliação. Tente novamente.');
+        }
     }
 }
 
@@ -533,11 +667,11 @@ function printAdminResults() {
 // ==========================================
 // FILTERS
 // ==========================================
-function applyFilters() {
+async function applyFilters() {
     const startDate = document.getElementById('filterDateStart').value;
     const endDate = document.getElementById('filterDateEnd').value;
 
-    let results = getAllResults();
+    let results = await getAllResults();
 
     if (startDate) {
         const start = new Date(startDate);
@@ -562,18 +696,19 @@ function clearFilters() {
     loadAdminData();
 }
 
-function refreshData() {
+async function refreshData() {
     filteredResults = null;
-    clearFilters();
-    loadAdminData();
+    document.getElementById('filterDateStart').value = '';
+    document.getElementById('filterDateEnd').value = '';
+    await loadAdminData();
     alert('Dados atualizados!');
 }
 
 // ==========================================
 // EXPORT FUNCTIONS
 // ==========================================
-function exportToCSV() {
-    const results = filteredResults || getAllResults();
+async function exportToCSV() {
+    const results = filteredResults || await getAllResults();
     if (results.length === 0) {
         alert('Não há dados para exportar.');
         return;
@@ -597,8 +732,8 @@ function exportToCSV() {
     downloadFile(csv, `vanguardia_disc_${getDateString()}.csv`, 'text/csv;charset=utf-8;');
 }
 
-function exportToExcel() {
-    const results = filteredResults || getAllResults();
+async function exportToExcel() {
+    const results = filteredResults || await getAllResults();
     if (results.length === 0) {
         alert('Não há dados para exportar.');
         return;
@@ -641,13 +776,18 @@ function exportToExcel() {
     XLSX.writeFile(wb, `vanguardia_disc_${getDateString()}.xlsx`);
 }
 
-function clearAllData() {
+async function clearAllData() {
     if (confirm('ATENÇÃO: Você está prestes a apagar TODOS os dados das avaliações.\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja continuar?')) {
         if (confirm('Confirmação final: Tem certeza absoluta?')) {
-            localStorage.removeItem('discResults');
-            filteredResults = null;
-            loadAdminData();
-            alert('Todos os dados foram apagados.');
+            try {
+                await deleteAllFromSupabase();
+                allResults = [];
+                filteredResults = null;
+                loadAdminData();
+                alert('Todos os dados foram apagados.');
+            } catch (error) {
+                alert('Erro ao apagar dados. Tente novamente.');
+            }
         }
     }
 }

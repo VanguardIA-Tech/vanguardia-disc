@@ -40,7 +40,7 @@ body {
 /* Header */
 .header {
     background: var(--white);
-    padding: 1rem 2rem;
+    padding: 0.75rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -48,6 +48,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    min-height: 70px;
 }
 
 .logo {
@@ -59,6 +60,16 @@ body {
 .logo-icon {
     width: 40px;
     height: 32px;
+}
+
+.logo-full {
+    width: 160px;
+    height: auto;
+}
+
+.logo-img {
+    height: 70px;
+    width: auto;
 }
 
 .logo-text {
@@ -612,8 +623,8 @@ body {
 }
 
 .login-logo {
-    width: 60px;
-    height: 48px;
+    width: 250px;
+    height: auto;
     margin-bottom: 1rem;
 }
 
