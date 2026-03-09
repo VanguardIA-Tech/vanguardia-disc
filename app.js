@@ -4,8 +4,8 @@
 // ==========================================
 // SUPABASE CONFIGURATION
 // ==========================================
-const SUPABASE_URL = 'https://alwpwpufxwokruysmlln.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsd3B3cHVmeHdva3J1eXNtbGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjUzMzcsImV4cCI6MjA4NTkwMTMzN30.s0zW6cpjlC0m-s8wJNeVSssgXVMEZFVqc4ekgs-6l5Y';
+const SUPABASE_URL = 'http://localhost:8000';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 
 // ==========================================
 // ADMIN CONFIGURATION
