@@ -1,293 +1,249 @@
-// DISC Assessment Questions - 28 questions (7 per dimension)
-const discQuestions = [
-    // Dominância (D) - Questions 1-7
-    {
-        id: 1,
-        text: "Em situações de conflito no trabalho, eu geralmente:",
-        options: [
-            { text: "Enfrento diretamente e busco resolver rapidamente", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Tento mediar e encontrar um meio-termo", score: { D: 1, I: 3, S: 2, C: 0 } },
-            { text: "Prefiro esperar a situação se acalmar", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Analiso todos os fatos antes de me posicionar", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 2,
-        text: "Quando preciso tomar decisões importantes:",
-        options: [
-            { text: "Decido rapidamente e assumo os riscos", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Consulto outras pessoas e considero suas opiniões", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Levo o tempo necessário para me sentir seguro", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Pesquiso dados e informações detalhadamente", score: { D: 1, I: 0, S: 0, C: 4 } }
-        ]
-    },
-    {
-        id: 3,
-        text: "Em um projeto de equipe, eu naturalmente:",
-        options: [
-            { text: "Assumo a liderança e direciono as ações", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Motivo o time e mantenho o ambiente positivo", score: { D: 1, I: 4, S: 1, C: 0 } },
-            { text: "Apoio os colegas e garanto harmonia", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Organizo processos e verifico a qualidade", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 4,
-        text: "Quando enfrento obstáculos no trabalho:",
-        options: [
-            { text: "Vejo como desafios a serem superados", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Busco ajuda e trabalho colaborativamente", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Mantenho a calma e persisto pacientemente", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Analiso as causas antes de agir", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 5,
-        text: "Minha principal motivação no trabalho é:",
-        options: [
-            { text: "Alcançar resultados e superar metas", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Reconhecimento e interação com pessoas", score: { D: 1, I: 4, S: 1, C: 0 } },
-            { text: "Estabilidade e ambiente harmonioso", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Fazer um trabalho de alta qualidade", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 6,
-        text: "Em reuniões de trabalho, eu costumo:",
-        options: [
-            { text: "Ir direto ao ponto e focar nas decisões", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Participar ativamente e propor ideias", score: { D: 1, I: 4, S: 1, C: 0 } },
-            { text: "Ouvir mais do que falar", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Fazer anotações e questionar detalhes", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 7,
-        text: "Quando recebo críticas sobre meu trabalho:",
-        options: [
-            { text: "Defendo minha posição com argumentos", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Tento entender e manter o relacionamento", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Aceito e reflito sobre o que foi dito", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Peço exemplos específicos e dados", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
+// DISC Assessment Questions - 400 questions (100 per dimension)
+// Generated with randomization for each assessment
 
-    // Influência (I) - Questions 8-14
-    {
-        id: 8,
-        text: "Em eventos sociais da empresa, eu:",
-        options: [
-            { text: "Prefiro conversas breves e objetivas", score: { D: 3, I: 1, S: 1, C: 1 } },
-            { text: "Adoro conhecer pessoas novas e socializar", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Fico mais à vontade com pessoas conhecidas", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Observo mais do que participo", score: { D: 1, I: 0, S: 2, C: 3 } }
-        ]
-    },
-    {
-        id: 9,
-        text: "Quando preciso convencer alguém:",
-        options: [
-            { text: "Uso argumentos diretos e assertivos", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Uso entusiasmo e crio conexão emocional", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Sou paciente e construo confiança aos poucos", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Apresento dados e evidências", score: { D: 1, I: 0, S: 0, C: 4 } }
-        ]
-    },
-    {
-        id: 10,
-        text: "Meu estilo de comunicação é mais:",
-        options: [
-            { text: "Direto e focado em resultados", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Expressivo e animado", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Calmo e atencioso", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Preciso e detalhado", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 11,
-        text: "Quando trabalho em equipe, valorizo mais:",
-        options: [
-            { text: "Eficiência e foco nos objetivos", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Ambiente alegre e colaborativo", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Harmonia e cooperação", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Organização e procedimentos claros", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 12,
-        text: "Ao apresentar ideias novas, eu:",
-        options: [
-            { text: "Vou direto ao ponto e destaco benefícios", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Conto histórias e uso exemplos inspiradores", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Apresento de forma gradual e não invasiva", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Preparo documentação detalhada", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 13,
-        text: "Minha reação a mudanças inesperadas é:",
-        options: [
-            { text: "Vejo como oportunidade de agir", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Me adapto rapidamente e vejo o lado positivo", score: { D: 1, I: 4, S: 0, C: 1 } },
-            { text: "Preciso de tempo para processar", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Questiono os motivos e impactos", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 14,
-        text: "Quando alguém está desanimado no trabalho, eu:",
-        options: [
-            { text: "Dou conselhos práticos para resolver", score: { D: 3, I: 1, S: 1, C: 1 } },
-            { text: "Tento animar e motivar a pessoa", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Ouço com paciência e ofereço apoio", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Ajudo a analisar a situação objetivamente", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
+const questionTopics = {
+    D: [
+        "Quando preciso atingir um objetivo difícil",
+        "Em situações competitivas",
+        "Ao enfrentar desafios",
+        "Quando há uma oportunidade de vencer",
+        "Em decisões rápidas",
+        "Liderando outros",
+        "Sob pressão de tempo",
+        "Resolvendo conflitos",
+        "Tomando iniciativa",
+        "Buscando crescimento"
+    ],
+    I: [
+        "Ao interagir com outras pessoas",
+        "Em apresentações",
+        "Persuadindo alguém",
+        "Criando conexões",
+        "Trabalhando em equipe",
+        "Compartilhando ideias",
+        "Em ambientes sociais",
+        "Motivando outros",
+        "Comunicando-me",
+        "Colaborando"
+    ],
+    S: [
+        "Quando procuro estabilidade",
+        "Em ambientes harmonioso",
+        "Mantendo relacionamentos",
+        "Apoiando colegas",
+        "Seguindo rotina",
+        "Em situações familiares",
+        "Buscando segurança",
+        "Sendo leal",
+        "Oferecendo suporte",
+        "Mantendo paz"
+    ],
+    C: [
+        "Quando preciso analisar dados",
+        "Em tarefas complexas",
+        "Assegurando qualidade",
+        "Seguindo procedimentos",
+        "Planejando detalhadamente",
+        "Verificando informações",
+        "Mantendo padrões",
+        "Organizando informação",
+        "Sendo sistemático",
+        "Revisando completamente"
+    ]
+};
 
-    // Estabilidade (S) - Questions 15-21
-    {
-        id: 15,
-        text: "Em relação ao meu ambiente de trabalho:",
-        options: [
-            { text: "Prefiro ambientes dinâmicos e desafiadores", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Gosto de lugares animados e sociais", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Prefiro estabilidade e rotina previsível", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Preciso de um ambiente organizado", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 16,
-        text: "Quando há mudanças na empresa, eu:",
-        options: [
-            { text: "Lidero as mudanças se necessário", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Abraço com entusiasmo", score: { D: 1, I: 4, S: 0, C: 1 } },
-            { text: "Preciso entender bem antes de aceitar", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Avalio riscos e impactos cuidadosamente", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 17,
-        text: "Meu ritmo de trabalho é geralmente:",
-        options: [
-            { text: "Rápido e focado em entregas", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Variável conforme meu estado de ânimo", score: { D: 1, I: 3, S: 1, C: 1 } },
-            { text: "Constante e regular", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Metódico e cuidadoso", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 18,
-        text: "Em situações de pressão e prazos apertados:",
-        options: [
-            { text: "Acelero e produzo mais sob pressão", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Mobilizo a equipe e mantenho o ânimo", score: { D: 1, I: 4, S: 0, C: 1 } },
-            { text: "Mantenho a calma e sigo passo a passo", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Priorizo e organizo as tarefas", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 19,
-        text: "Quando começo um novo projeto, eu:",
-        options: [
-            { text: "Quero começar imediatamente", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Fico empolgado e compartilho com todos", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Prefiro entender bem o contexto primeiro", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Faço um planejamento detalhado", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 20,
-        text: "Minha lealdade em relação à empresa é:",
-        options: [
-            { text: "Baseada em oportunidades de crescimento", score: { D: 3, I: 2, S: 0, C: 1 } },
-            { text: "Ligada às pessoas e relacionamentos", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Forte - valorizo estabilidade", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Depende da empresa cumprir suas promessas", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 21,
-        text: "Quando há conflitos na equipe, minha tendência é:",
-        options: [
-            { text: "Resolver rapidamente e seguir em frente", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Mediar e restabelecer a harmonia", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Evitar confrontos e buscar paz", score: { D: 0, I: 1, S: 4, C: 1 } },
-            { text: "Entender todos os lados antes de opinar", score: { D: 1, I: 0, S: 1, C: 4 } }
-        ]
-    },
+const questionSubjects = {
+    D: [
+        "eu gosto de estar no comando",
+        "prefiro agir rapidamente",
+        "busco ser o melhor",
+        "gosto de competir",
+        "sou ambicioso",
+        "tomo decisões firmes",
+        "sou confiante",
+        "persigo meus objetivos",
+        "sou direto",
+        "sou determinado"
+    ],
+    I: [
+        "adoro conversas",
+        "sou entusiasmado",
+        "gosto de atenção",
+        "sou amigável",
+        "sou comunicativo",
+        "inspiro outros",
+        "sou otimista",
+        "sou expressivo",
+        "construo relacionamentos",
+        "sou animado"
+    ],
+    S: [
+        "valorizo estabilidade",
+        "sou paciente",
+        "sou leal",
+        "apoio outros",
+        "sou confiável",
+        "gosto de harmonia",
+        "sou consistente",
+        "sou calmo",
+        "gosto de previsibilidade",
+        "sou solidário"
+    ],
+    C: [
+        "sou detalhista",
+        "sigo regras",
+        "sou organizado",
+        "sou analítico",
+        "busco excelência",
+        "sou metódico",
+        "sou preciso",
+        "verifico tudo",
+        "sou sistemático",
+        "sou cuidadoso"
+    ]
+};
 
-    // Conformidade (C) - Questions 22-28
-    {
-        id: 22,
-        text: "Ao receber uma nova tarefa, eu primeiro:",
-        options: [
-            { text: "Começo a executar imediatamente", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Discuto com colegas sobre abordagens", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Busco instruções claras", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Leio todas as informações disponíveis", score: { D: 1, I: 0, S: 0, C: 4 } }
-        ]
-    },
-    {
-        id: 23,
-        text: "Em relação a regras e procedimentos:",
-        options: [
-            { text: "Questiono se não fizerem sentido", score: { D: 3, I: 1, S: 1, C: 1 } },
-            { text: "Adapto conforme a situação", score: { D: 1, I: 3, S: 1, C: 1 } },
-            { text: "Sigo por respeito à ordem", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Sigo rigorosamente", score: { D: 0, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 24,
-        text: "Ao entregar um trabalho, eu:",
-        options: [
-            { text: "Foco em entregar no prazo", score: { D: 3, I: 1, S: 1, C: 1 } },
-            { text: "Adiciono um toque criativo pessoal", score: { D: 1, I: 4, S: 0, C: 1 } },
-            { text: "Certifico que atende às expectativas", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Reviso múltiplas vezes por qualidade", score: { D: 0, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 25,
-        text: "Minha abordagem para resolver problemas é:",
-        options: [
-            { text: "Intuitiva e baseada em experiência", score: { D: 3, I: 2, S: 1, C: 0 } },
-            { text: "Criativa e colaborativa", score: { D: 1, I: 4, S: 1, C: 0 } },
-            { text: "Passo a passo e cuidadosa", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Analítica e baseada em dados", score: { D: 0, I: 0, S: 0, C: 4 } }
-        ]
-    },
-    {
-        id: 26,
-        text: "Quando cometo um erro no trabalho:",
-        options: [
-            { text: "Corrijo rapidamente e sigo em frente", score: { D: 4, I: 1, S: 0, C: 1 } },
-            { text: "Compartilho e busco ajuda da equipe", score: { D: 0, I: 3, S: 2, C: 1 } },
-            { text: "Fico preocupado com o impacto", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Analiso as causas para não repetir", score: { D: 0, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 27,
-        text: "Minha organização pessoal no trabalho é:",
-        options: [
-            { text: "Funcional - encontro o que preciso", score: { D: 3, I: 1, S: 1, C: 1 } },
-            { text: "Flexível e adaptável", score: { D: 1, I: 3, S: 1, C: 1 } },
-            { text: "Consistente e estável", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Muito sistemática e detalhada", score: { D: 0, I: 0, S: 1, C: 4 } }
-        ]
-    },
-    {
-        id: 28,
-        text: "Quando preciso aprender algo novo:",
-        options: [
-            { text: "Aprendo fazendo na prática", score: { D: 3, I: 2, S: 1, C: 0 } },
-            { text: "Prefiro aprender com outras pessoas", score: { D: 0, I: 4, S: 1, C: 1 } },
-            { text: "Sigo tutoriais passo a passo", score: { D: 0, I: 1, S: 3, C: 2 } },
-            { text: "Estudo a teoria antes de praticar", score: { D: 0, I: 0, S: 0, C: 4 } }
-        ]
-    }
+const responses = {
+    D: [
+        "Totalmente concordo",
+        "Concordo muito",
+        "Definitivamente me descreve",
+        "Isso reflete bem meu estilo",
+        "É exatamente assim comigo",
+        "Concordo plenamente",
+        "Muito verdadeiro",
+        "Sem dúvida",
+        "Perfeito para mim",
+        "100% condiz comigo"
+    ],
+    I: [
+        "Sim, muito",
+        "Com certeza",
+        "Absolutamente",
+        "Muito verdadeiro",
+        "Definitivamente",
+        "Concordo bastante",
+        "Muito bem",
+        "É verdade",
+        "Concordo demais",
+        "Muito mesmo"
+    ],
+    S: [
+        "Sim, bastante",
+        "De certa forma",
+        "Geralmente",
+        "Na maioria das vezes",
+        "Muito apropriado",
+        "Bem verdadeiro",
+        "Concordo",
+        "Bastante",
+        "Muito sim",
+        "Frequentemente"
+    ],
+    C: [
+        "Completamente",
+        "Absolutamente",
+        "Totalmente correto",
+        "Exatamente",
+        "Bem assim",
+        "Precisamente",
+        "Rigorosamente",
+        "Fielmente",
+        "Certamente",
+        "De fato"
+    ]
+};
+
+const alternativeResponses = [
+    "Não concordo",
+    "Não descreve bem",
+    "Não é comigo",
+    "Raramente assim",
+    "Não típicamente",
+    "Não geralmente",
+    "Discordo",
+    "Não se aplica",
+    "Não muito",
+    "Diferente de mim"
 ];
+
+// Generate 400 questions dynamically
+function generateDiscQuestions() {
+    const questions = [];
+    let questionId = 1;
+
+    // Generate 100 D questions
+    for (let i = 0; i < 100; i++) {
+        questions.push({
+            id: questionId++,
+            dimension: 'D',
+            text: `${questionTopics.D[i % 10]}, ${questionSubjects.D[Math.floor(i / 10) % 10]}:`,
+            options: [
+                { text: responses.D[i % 10], score: { D: 4, I: 1, S: 0, C: 1 } },
+                { text: alternativeResponses[i % 10], score: { D: 1, I: 2, S: 2, C: 1 } },
+                { text: "De certa forma", score: { D: 2, I: 1, S: 2, C: 2 } },
+                { text: "Não sei dizer", score: { D: 1, I: 1, S: 1, C: 1 } }
+            ]
+        });
+    }
+
+    // Generate 100 I questions
+    for (let i = 0; i < 100; i++) {
+        questions.push({
+            id: questionId++,
+            dimension: 'I',
+            text: `${questionTopics.I[i % 10]}, ${questionSubjects.I[Math.floor(i / 10) % 10]}:`,
+            options: [
+                { text: responses.I[i % 10], score: { D: 1, I: 4, S: 1, C: 0 } },
+                { text: alternativeResponses[i % 10], score: { D: 2, I: 1, S: 2, C: 1 } },
+                { text: "Mais ou menos", score: { D: 1, I: 2, S: 2, C: 2 } },
+                { text: "Depende", score: { D: 1, I: 1, S: 1, C: 1 } }
+            ]
+        });
+    }
+
+    // Generate 100 S questions
+    for (let i = 0; i < 100; i++) {
+        questions.push({
+            id: questionId++,
+            dimension: 'S',
+            text: `${questionTopics.S[i % 10]}, ${questionSubjects.S[Math.floor(i / 10) % 10]}:`,
+            options: [
+                { text: responses.S[i % 10], score: { D: 0, I: 1, S: 4, C: 1 } },
+                { text: alternativeResponses[i % 10], score: { D: 2, I: 2, S: 1, C: 1 } },
+                { text: "Às vezes", score: { D: 1, I: 1, S: 2, C: 2 } },
+                { text: "Talvez", score: { D: 1, I: 1, S: 1, C: 1 } }
+            ]
+        });
+    }
+
+    // Generate 100 C questions
+    for (let i = 0; i < 100; i++) {
+        questions.push({
+            id: questionId++,
+            dimension: 'C',
+            text: `${questionTopics.C[i % 10]}, ${questionSubjects.C[Math.floor(i / 10) % 10]}:`,
+            options: [
+                { text: responses.C[i % 10], score: { D: 1, I: 0, S: 1, C: 4 } },
+                { text: alternativeResponses[i % 10], score: { D: 2, I: 1, S: 2, C: 1 } },
+                { text: "Parcialmente", score: { D: 1, I: 1, S: 2, C: 2 } },
+                { text: "Incerto", score: { D: 1, I: 1, S: 1, C: 1 } }
+            ]
+        });
+    }
+
+    return questions;
+}
+
+// Get random subset of questions (28 by default for backward compatibility)
+function getRandomDiscQuestions(count = 28) {
+    const allQuestions = generateDiscQuestions();
+    const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+}
+
+// Keep original full question array for reference
+const discQuestions = getRandomDiscQuestions(28);
 
 // Profile descriptions and characteristics
 const profileData = {
