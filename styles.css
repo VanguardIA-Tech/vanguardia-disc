@@ -909,3 +909,123 @@ body {
         padding: 0;
     }
 }
+
+/* ==========================================
+   PROJECT MANAGEMENT
+   ========================================== */
+.projects-section {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.projects-section h3 {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.projects-hint {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.project-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+
+.project-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.project-item-info strong {
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.project-desc {
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+.project-link-text {
+    font-size: 0.78rem;
+    color: var(--primary-color);
+    word-break: break-all;
+    font-family: monospace;
+}
+
+.project-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.project-badge {
+    display: inline-block;
+    background: #eef2fb;
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.create-project-form {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.25rem;
+}
+
+.create-project-form h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-color);
+}
+
+.form-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.form-row input {
+    flex: 1;
+    min-width: 160px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.form-row input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.btn-small {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.82rem;
+}

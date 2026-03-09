@@ -1,71 +1,98 @@
--- VANGUARDIA DISC - Criação do banco de dados
--- Execute este script no Supabase SQL Editor
--- ou via psql: psql postgresql://postgres:SENHA@127.0.0.1:5432/postgres -f setup.sql
+-- VANGUARDIA DISC - Setup do banco de dados
+-- Execute no SQL Editor do Supabase (schema: disc_vanguardia)
 
 -- ============================================================
--- TABELA PRINCIPAL: disc_assessments
+-- SCHEMA
 -- ============================================================
-CREATE TABLE IF NOT EXISTS public.disc_assessments (
+CREATE SCHEMA IF NOT EXISTS disc_vanguardia;
+
+-- ============================================================
+-- TABELA: projects
+-- ============================================================
+CREATE TABLE IF NOT EXISTS disc_vanguardia.projects (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT true NOT NULL
+);
 
-    -- Dados do candidato
+-- ============================================================
+-- TABELA: disc_assessments
+-- ============================================================
+CREATE TABLE IF NOT EXISTS disc_vanguardia.disc_assessments (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    project_id BIGINT REFERENCES disc_vanguardia.projects(id),
     candidate_name TEXT NOT NULL,
     candidate_email TEXT NOT NULL,
     candidate_phone TEXT,
     candidate_position TEXT,
     candidate_department TEXT,
-
-    -- Pontuações DISC
     score_d INTEGER NOT NULL DEFAULT 0,
     score_i INTEGER NOT NULL DEFAULT 0,
     score_s INTEGER NOT NULL DEFAULT 0,
     score_c INTEGER NOT NULL DEFAULT 0,
-
-    -- Perfil dominante (D, I, S ou C)
     dominant_profile CHAR(1) NOT NULL,
-
-    -- Respostas completas em JSON
     answers JSONB
 );
 
 -- ============================================================
--- ÍNDICES para performance em consultas
+-- ÍNDICES
 -- ============================================================
-CREATE INDEX IF NOT EXISTS idx_disc_email ON public.disc_assessments(candidate_email);
-CREATE INDEX IF NOT EXISTS idx_disc_created ON public.disc_assessments(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_disc_profile ON public.disc_assessments(dominant_profile);
-CREATE INDEX IF NOT EXISTS idx_disc_department ON public.disc_assessments(candidate_department);
-
--- ============================================================
--- PERMISSÕES: liberar acesso para anon key (leitura e escrita)
--- ============================================================
-ALTER TABLE public.disc_assessments ENABLE ROW LEVEL SECURITY;
-
--- Permite anon inserir (candidato preenche o formulário)
-CREATE POLICY "anon_insert" ON public.disc_assessments
-    FOR INSERT TO anon WITH CHECK (true);
-
--- Permite anon ler apenas seus próprios registros por email (opcional)
--- Para simplificar: permite leitura total via service_role (admin)
-CREATE POLICY "service_select_all" ON public.disc_assessments
-    FOR SELECT TO service_role USING (true);
-
-CREATE POLICY "service_delete" ON public.disc_assessments
-    FOR DELETE TO service_role USING (true);
-
--- Para o painel admin funcionar com anon key, libere leitura:
-CREATE POLICY "anon_select_all" ON public.disc_assessments
-    FOR SELECT TO anon USING (true);
-
-CREATE POLICY "anon_delete" ON public.disc_assessments
-    FOR DELETE TO anon USING (true);
+CREATE INDEX IF NOT EXISTS idx_disc_email      ON disc_vanguardia.disc_assessments(candidate_email);
+CREATE INDEX IF NOT EXISTS idx_disc_created    ON disc_vanguardia.disc_assessments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_disc_profile    ON disc_vanguardia.disc_assessments(dominant_profile);
+CREATE INDEX IF NOT EXISTS idx_disc_project    ON disc_vanguardia.disc_assessments(project_id);
 
 -- ============================================================
--- VERIFICAÇÃO: listar tabelas criadas
+-- RLS: projects
 -- ============================================================
-SELECT table_name, column_name, data_type
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name = 'disc_assessments'
-ORDER BY ordinal_position;
+ALTER TABLE disc_vanguardia.projects ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "proj_anon_select" ON disc_vanguardia.projects FOR SELECT TO anon USING (true);
+CREATE POLICY "proj_anon_insert" ON disc_vanguardia.projects FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "proj_anon_update" ON disc_vanguardia.projects FOR UPDATE TO anon USING (true);
+CREATE POLICY "proj_anon_delete" ON disc_vanguardia.projects FOR DELETE TO anon USING (true);
+
+-- ============================================================
+-- RLS: disc_assessments
+-- ============================================================
+ALTER TABLE disc_vanguardia.disc_assessments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "anon_insert"     ON disc_vanguardia.disc_assessments FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "anon_select_all" ON disc_vanguardia.disc_assessments FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_delete"     ON disc_vanguardia.disc_assessments FOR DELETE TO anon USING (true);
+
+-- ============================================================
+-- PROJETO PADRÃO
+-- ============================================================
+INSERT INTO disc_vanguardia.projects (name, description)
+VALUES ('DISC - Vanguardia', 'Projeto padrão de avaliações DISC')
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- MIGRAÇÃO: adicionar project_id se tabela já existia
+-- ============================================================
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'disc_vanguardia'
+          AND table_name   = 'disc_assessments'
+          AND column_name  = 'project_id'
+    ) THEN
+        ALTER TABLE disc_vanguardia.disc_assessments
+            ADD COLUMN project_id BIGINT REFERENCES disc_vanguardia.projects(id);
+        CREATE INDEX idx_disc_project ON disc_vanguardia.disc_assessments(project_id);
+    END IF;
+END
+$$;
+
+-- ============================================================
+-- VERIFICAÇÃO
+-- ============================================================
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'disc_vanguardia'
+ORDER BY table_name;

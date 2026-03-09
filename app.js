@@ -27,6 +27,20 @@ let isAdminLoggedIn = false;
 let currentViewingResult = null;
 let filteredResults = null;
 let allResults = [];
+let allProjects = [];
+let currentProjectId = null;   // set from URL param ?project=ID
+let adminFilterProjectId = null;
+
+// ==========================================
+// URL PARAM: read project on load
+// ==========================================
+function readProjectFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get('project');
+    if (pid) {
+        currentProjectId = parseInt(pid, 10);
+    }
+}
 
 // ==========================================
 // SUPABASE API FUNCTIONS
@@ -64,6 +78,7 @@ async function supabaseRequest(endpoint, options = {}) {
 
 async function saveToSupabase(result) {
     const data = {
+        project_id: currentProjectId || null,
         candidate_name: result.candidate.name,
         candidate_email: result.candidate.email,
         candidate_phone: result.candidate.phone || null,
@@ -83,8 +98,12 @@ async function saveToSupabase(result) {
     });
 }
 
-async function fetchFromSupabase() {
-    return await supabaseRequest('disc_assessments?select=*&order=created_at.desc');
+async function fetchFromSupabase(projectId = null) {
+    let query = 'disc_assessments?select=*,projects(name)&order=created_at.desc';
+    if (projectId) {
+        query += `&project_id=eq.${projectId}`;
+    }
+    return await supabaseRequest(query);
 }
 
 async function deleteFromSupabase(id) {
@@ -93,10 +112,29 @@ async function deleteFromSupabase(id) {
     });
 }
 
-async function deleteAllFromSupabase() {
-    return await supabaseRequest('disc_assessments?id=gt.0', {
-        method: 'DELETE'
+async function deleteAllFromSupabase(projectId = null) {
+    let endpoint = projectId
+        ? `disc_assessments?id=gt.0&project_id=eq.${projectId}`
+        : 'disc_assessments?id=gt.0';
+    return await supabaseRequest(endpoint, { method: 'DELETE' });
+}
+
+// ==========================================
+// PROJECTS SUPABASE FUNCTIONS
+// ==========================================
+async function fetchProjects() {
+    return await supabaseRequest('projects?select=*&order=created_at.asc');
+}
+
+async function createProject(name, description) {
+    return await supabaseRequest('projects', {
+        method: 'POST',
+        body: JSON.stringify({ name, description: description || null, is_active: true })
     });
+}
+
+async function deleteProject(id) {
+    return await supabaseRequest(`projects?id=eq.${id}`, { method: 'DELETE' });
 }
 
 // Convert Supabase format to app format
@@ -104,6 +142,8 @@ function convertSupabaseToAppFormat(record) {
     return {
         id: record.id,
         date: record.created_at,
+        projectId: record.project_id,
+        projectName: record.projects ? record.projects.name : null,
         candidate: {
             name: record.candidate_name,
             email: record.candidate_email,
@@ -126,6 +166,7 @@ function convertSupabaseToAppFormat(record) {
 // INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
+    readProjectFromUrl();
     initNavigation();
     initCandidateForm();
     initAdminLogin();
@@ -404,7 +445,7 @@ function getDominantProfile(scores) {
 // ==========================================
 async function getAllResults() {
     try {
-        const data = await fetchFromSupabase();
+        const data = await fetchFromSupabase(adminFilterProjectId);
         allResults = data.map(convertSupabaseToAppFormat);
         return allResults;
     } catch (error) {
@@ -534,13 +575,14 @@ function resetAssessmentForm() {
 // ADMIN FUNCTIONS
 // ==========================================
 async function loadAdminData() {
-    // Show loading
     document.getElementById('totalAssessments').textContent = '...';
 
     try {
+        // Load projects for filter dropdown
+        await loadProjectsFilter();
+
         const results = filteredResults || await getAllResults();
 
-        // Stats
         document.getElementById('totalAssessments').textContent = results.length;
 
         if (results.length > 0) {
@@ -550,14 +592,13 @@ async function loadAdminData() {
             document.getElementById('avgS').textContent = `${avgScores.S}%`;
             document.getElementById('avgC').textContent = `${avgScores.C}%`;
 
-            // Show table, hide no data message
             document.getElementById('noDataMessage').classList.add('hidden');
 
-            // Table
             const tbody = document.getElementById('assessmentsTable');
             tbody.innerHTML = results.map(result => `
                 <tr>
                     <td>${formatDateTime(result.date)}</td>
+                    <td><span class="project-badge">${escapeHtml(result.projectName || '—')}</span></td>
                     <td>${escapeHtml(result.candidate.name)}</td>
                     <td>${escapeHtml(result.candidate.email)}</td>
                     <td>${escapeHtml(result.candidate.phone || '-')}</td>
@@ -569,7 +610,7 @@ async function loadAdminData() {
                     <td>${result.scores.C}%</td>
                     <td>${profileData[result.dominantProfile].name}</td>
                     <td>
-                        <button class="btn btn-secondary" onclick="viewResult(${result.id})">Ver</button>
+                        <button class="btn btn-secondary btn-small" onclick="viewResult(${result.id})">Ver</button>
                     </td>
                 </tr>
             `).join('');
@@ -586,6 +627,88 @@ async function loadAdminData() {
         document.getElementById('totalAssessments').textContent = 'Erro';
         document.getElementById('noDataMessage').classList.remove('hidden');
         document.getElementById('noDataMessage').textContent = 'Erro ao carregar dados. Tente novamente.';
+    }
+}
+
+// ==========================================
+// PROJECT MANAGEMENT FUNCTIONS
+// ==========================================
+async function loadProjectsFilter() {
+    try {
+        allProjects = await fetchProjects();
+        renderProjectsFilter();
+        renderProjectsManager();
+    } catch (e) {
+        console.error('Erro ao carregar projetos:', e);
+    }
+}
+
+function renderProjectsFilter() {
+    const sel = document.getElementById('filterProject');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Todos os projetos</option>' +
+        allProjects.map(p => `<option value="${p.id}" ${String(p.id) === current ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+}
+
+function renderProjectsManager() {
+    const container = document.getElementById('projectsList');
+    if (!container) return;
+
+    if (allProjects.length === 0) {
+        container.innerHTML = '<p class="no-data-message">Nenhum projeto criado.</p>';
+        return;
+    }
+
+    const baseUrl = window.location.origin + window.location.pathname;
+    container.innerHTML = allProjects.map(p => `
+        <div class="project-item">
+            <div class="project-item-info">
+                <strong>${escapeHtml(p.name)}</strong>
+                ${p.description ? `<span class="project-desc">${escapeHtml(p.description)}</span>` : ''}
+                <span class="project-link-text">${baseUrl}?project=${p.id}</span>
+            </div>
+            <div class="project-item-actions">
+                <button class="btn btn-secondary btn-small" onclick="copyProjectLink(${p.id})">Copiar Link</button>
+                <button class="btn btn-danger btn-small" onclick="removeProject(${p.id})">Excluir</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function copyProjectLink(projectId) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const link = `${baseUrl}?project=${projectId}`;
+    navigator.clipboard.writeText(link).then(() => {
+        alert('Link copiado:\n' + link);
+    }).catch(() => {
+        prompt('Copie o link abaixo:', link);
+    });
+}
+
+async function handleCreateProject(e) {
+    e.preventDefault();
+    const name = document.getElementById('newProjectName').value.trim();
+    const desc = document.getElementById('newProjectDesc').value.trim();
+    if (!name) return;
+
+    try {
+        await createProject(name, desc);
+        document.getElementById('newProjectName').value = '';
+        document.getElementById('newProjectDesc').value = '';
+        await loadProjectsFilter();
+    } catch (err) {
+        alert('Erro ao criar projeto: ' + err.message);
+    }
+}
+
+async function removeProject(id) {
+    if (!confirm('Excluir este projeto? As avaliações vinculadas NÃO serão apagadas.')) return;
+    try {
+        await deleteProject(id);
+        await loadProjectsFilter();
+    } catch (err) {
+        alert('Erro ao excluir projeto: ' + err.message);
     }
 }
 
@@ -672,6 +795,8 @@ function printAdminResults() {
 async function applyFilters() {
     const startDate = document.getElementById('filterDateStart').value;
     const endDate = document.getElementById('filterDateEnd').value;
+    const projectSel = document.getElementById('filterProject');
+    adminFilterProjectId = projectSel && projectSel.value ? parseInt(projectSel.value) : null;
 
     let results = await getAllResults();
 
@@ -694,14 +819,20 @@ async function applyFilters() {
 function clearFilters() {
     document.getElementById('filterDateStart').value = '';
     document.getElementById('filterDateEnd').value = '';
+    const projectSel = document.getElementById('filterProject');
+    if (projectSel) projectSel.value = '';
+    adminFilterProjectId = null;
     filteredResults = null;
     loadAdminData();
 }
 
 async function refreshData() {
     filteredResults = null;
+    adminFilterProjectId = null;
     document.getElementById('filterDateStart').value = '';
     document.getElementById('filterDateEnd').value = '';
+    const projectSel = document.getElementById('filterProject');
+    if (projectSel) projectSel.value = '';
     await loadAdminData();
     alert('Dados atualizados!');
 }
@@ -779,14 +910,17 @@ async function exportToExcel() {
 }
 
 async function clearAllData() {
-    if (confirm('ATENÇÃO: Você está prestes a apagar TODOS os dados das avaliações.\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja continuar?')) {
+    const scope = adminFilterProjectId
+        ? `do projeto "${allProjects.find(p => p.id === adminFilterProjectId)?.name || adminFilterProjectId}"`
+        : 'de TODOS os projetos';
+    if (confirm(`ATENÇÃO: Você está prestes a apagar TODAS as avaliações ${scope}.\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja continuar?`)) {
         if (confirm('Confirmação final: Tem certeza absoluta?')) {
             try {
-                await deleteAllFromSupabase();
+                await deleteAllFromSupabase(adminFilterProjectId);
                 allResults = [];
                 filteredResults = null;
                 loadAdminData();
-                alert('Todos os dados foram apagados.');
+                alert('Dados apagados.');
             } catch (error) {
                 alert('Erro ao apagar dados. Tente novamente.');
             }

@@ -274,7 +274,11 @@
 
                     <div class="admin-filters">
                         <div class="filter-group">
-                            <label>Filtrar por período:</label>
+                            <label>Projeto:</label>
+                            <select id="filterProject">
+                                <option value="">Todos os projetos</option>
+                            </select>
+                            <label>Período:</label>
                             <input type="date" id="filterDateStart">
                             <span>até</span>
                             <input type="date" id="filterDateEnd">
@@ -289,6 +293,7 @@
                             <thead>
                                 <tr>
                                     <th>Data/Hora</th>
+                                    <th>Projeto</th>
                                     <th>Nome</th>
                                     <th>E-mail</th>
                                     <th>Telefone</th>
@@ -313,8 +318,27 @@
 
                     <div class="admin-actions-bottom">
                         <button class="btn btn-danger" onclick="clearAllData()">
-                            🗑️ Limpar Todos os Dados
+                            🗑️ Limpar Dados do Filtro Atual
                         </button>
+                    </div>
+
+                    <!-- Project Management -->
+                    <div class="projects-section">
+                        <h3>Gerenciar Projetos</h3>
+                        <p class="projects-hint">Cada projeto gera um link único para compartilhar com candidatos.</p>
+
+                        <div id="projectsList" class="projects-list">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <form id="createProjectForm" class="create-project-form" onsubmit="handleCreateProject(event)">
+                            <h4>Novo Projeto</h4>
+                            <div class="form-row">
+                                <input type="text" id="newProjectName" placeholder="Nome do projeto *" required>
+                                <input type="text" id="newProjectDesc" placeholder="Descrição (opcional)">
+                                <button type="submit" class="btn btn-primary">Criar Projeto</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </section>
