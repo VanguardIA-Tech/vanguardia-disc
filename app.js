@@ -37,6 +37,8 @@ async function supabaseRequest(endpoint, options = {}) {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
+        'Accept-Profile': 'disc_vanguardia',
+        'Content-Profile': 'disc_vanguardia',
         'Prefer': options.prefer || 'return=representation'
     };
 
