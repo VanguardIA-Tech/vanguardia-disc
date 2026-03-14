@@ -4,7 +4,10 @@
 // ==========================================
 // SUPABASE CONFIGURATION
 // ==========================================
-const SUPABASE_URL = 'http://177.104.185.61:8000';
+// Usa proxy reverso no próprio domínio (/api → http://127.0.0.1:8000)
+// evitando bloqueio de Mixed Content quando o site usa HTTPS.
+// Ver database/nginx-supabase.conf para a configuração do nginx.
+const SUPABASE_URL = 'https://disc.vanguardigroup.com.br/api';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 
 // ==========================================
