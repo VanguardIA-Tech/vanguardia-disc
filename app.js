@@ -532,9 +532,9 @@ function renderChart(canvasId, scores, chartVar) {
             scales: {
                 r: {
                     beginAtZero: true,
-                    max: 50,
+                    max: 100,
                     ticks: {
-                        stepSize: 10
+                        stepSize: 20
                     }
                 }
             },
@@ -786,7 +786,109 @@ async function deleteResult() {
 }
 
 function printAdminResults() {
-    window.print();
+    const result = currentViewingResult;
+    if (!result) return;
+
+    const profile = profileData[result.dominantProfile];
+    const canvas = document.getElementById('adminDiscChart');
+    const chartImage = canvas ? canvas.toDataURL('image/png') : null;
+
+    const profileColors = { D: '#e74c3c', I: '#f39c12', S: '#27ae60', C: '#3498db' };
+    const profileColor = profileColors[result.dominantProfile] || '#1e4b8e';
+
+    const printWindow = window.open('', '_blank', 'width=900,height=750');
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório DISC - ${result.candidate.name}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #333; background: #fff; }
+  .page { max-width: 800px; margin: 0 auto; padding: 32px; }
+  .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1e4b8e; padding-bottom: 16px; margin-bottom: 24px; }
+  .header h1 { color: #1e4b8e; font-size: 22px; }
+  .header .date { font-size: 12px; color: #888; text-align: right; }
+  .candidate-info { background: #f5f7fa; border-radius: 8px; padding: 16px; margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .candidate-info h2 { grid-column: 1/-1; font-size: 18px; color: #1e4b8e; margin-bottom: 4px; }
+  .info-item { font-size: 13px; } .info-item span { color: #666; }
+  .scores-row { display: flex; gap: 12px; margin-bottom: 24px; }
+  .score-box { flex: 1; text-align: center; border-radius: 8px; padding: 14px 8px; }
+  .score-box.D { background: #fdecea; border: 2px solid #e74c3c; }
+  .score-box.I { background: #fef9ec; border: 2px solid #f39c12; }
+  .score-box.S { background: #eafaf1; border: 2px solid #27ae60; }
+  .score-box.C { background: #eaf4fb; border: 2px solid #3498db; }
+  .score-letter { font-size: 24px; font-weight: 700; }
+  .score-box.D .score-letter { color: #e74c3c; }
+  .score-box.I .score-letter { color: #f39c12; }
+  .score-box.S .score-letter { color: #27ae60; }
+  .score-box.C .score-letter { color: #3498db; }
+  .score-pct { font-size: 20px; font-weight: 600; }
+  .score-name { font-size: 11px; color: #666; margin-top: 4px; }
+  .chart-section { text-align: center; margin-bottom: 24px; }
+  .chart-section img { max-width: 320px; height: auto; }
+  .profile-banner { background: ${profileColor}; color: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+  .profile-banner h3 { font-size: 16px; margin-bottom: 4px; opacity: 0.85; }
+  .profile-banner p { font-size: 14px; line-height: 1.5; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .section-box h4 { font-size: 13px; font-weight: 700; color: #1e4b8e; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; }
+  .section-box ul { padding-left: 18px; font-size: 13px; line-height: 1.7; }
+  .recs-box { background: #f5f7fa; border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; }
+  .recs-box h4 { font-size: 13px; font-weight: 700; color: #1e4b8e; margin-bottom: 6px; }
+  .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 11px; color: #aaa; text-align: center; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div><h1>Relatório de Avaliação DISC</h1><div style="font-size:13px;color:#666;margin-top:4px;">Vanguardia Grupo</div></div>
+    <div class="date">${formatDateTime(result.date)}<br>${result.projectName ? `Projeto: ${result.projectName}` : ''}</div>
+  </div>
+
+  <div class="candidate-info">
+    <h2>${result.candidate.name}</h2>
+    ${result.candidate.email ? `<div class="info-item"><span>E-mail:</span> ${result.candidate.email}</div>` : ''}
+    ${result.candidate.phone ? `<div class="info-item"><span>Telefone:</span> ${result.candidate.phone}</div>` : ''}
+    ${result.candidate.position ? `<div class="info-item"><span>Cargo:</span> ${result.candidate.position}</div>` : ''}
+    ${result.candidate.department ? `<div class="info-item"><span>Departamento:</span> ${result.candidate.department}</div>` : ''}
+  </div>
+
+  <div class="scores-row">
+    <div class="score-box D"><div class="score-letter">D</div><div class="score-pct">${result.scores.D}%</div><div class="score-name">Dominância</div></div>
+    <div class="score-box I"><div class="score-letter">I</div><div class="score-pct">${result.scores.I}%</div><div class="score-name">Influência</div></div>
+    <div class="score-box S"><div class="score-letter">S</div><div class="score-pct">${result.scores.S}%</div><div class="score-name">Estabilidade</div></div>
+    <div class="score-box C"><div class="score-letter">C</div><div class="score-pct">${result.scores.C}%</div><div class="score-name">Conformidade</div></div>
+  </div>
+
+  ${chartImage ? `<div class="chart-section"><img src="${chartImage}" alt="Gráfico DISC"></div>` : ''}
+
+  <div class="profile-banner">
+    <h3>Perfil Predominante: ${profile.name}</h3>
+    <p>${profile.description}</p>
+  </div>
+
+  <div class="two-col">
+    <div class="section-box">
+      <h4>Pontos Fortes</h4>
+      <ul>${profile.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+    </div>
+    <div class="section-box">
+      <h4>Áreas de Desenvolvimento</h4>
+      <ul>${profile.improvements.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>
+  </div>
+
+  <div class="recs-box">
+    <h4>Recomendações para o Ambiente de Trabalho</h4>
+    <p>${profile.recommendations}</p>
+  </div>
+
+  <div class="footer">Vanguardia Grupo &bull; Sistema de Avaliação DISC &bull; Gerado em ${formatDateTime(new Date().toISOString())}</div>
+</div>
+<script>window.onload = function() { setTimeout(function(){ window.print(); }, 400); }<\/script>
+</body></html>`);
+    printWindow.document.close();
 }
 
 // ==========================================
@@ -847,11 +949,12 @@ async function exportToCSV() {
         return;
     }
 
-    let csv = 'Data/Hora,Nome,Email,Telefone,Cargo,Departamento,D%,I%,S%,C%,Perfil Dominante,Descricao do Perfil\n';
+    let csv = 'Data/Hora,Projeto,Nome,Email,Telefone,Cargo,Departamento,D%,I%,S%,C%,Perfil Dominante,Descricao do Perfil\n';
 
     results.forEach(r => {
         const profile = profileData[r.dominantProfile];
         csv += `"${formatDateTime(r.date)}",`;
+        csv += `"${r.projectName || ''}",`;
         csv += `"${r.candidate.name}",`;
         csv += `"${r.candidate.email}",`;
         csv += `"${r.candidate.phone || ''}",`;
@@ -877,6 +980,7 @@ async function exportToExcel() {
         const profile = profileData[r.dominantProfile];
         return {
             'Data/Hora': formatDateTime(r.date),
+            'Projeto': r.projectName || '',
             'Nome': r.candidate.name,
             'Email': r.candidate.email,
             'Telefone': r.candidate.phone || '',
