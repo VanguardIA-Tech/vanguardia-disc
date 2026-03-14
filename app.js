@@ -1,14 +1,11 @@
 // DISC Assessment Application for Vanguardia
-// Version 3.0 - With Supabase Integration
+// Version 4.0 - Supabase Cloud + Projects + PDF Export
 
 // ==========================================
 // SUPABASE CONFIGURATION
 // ==========================================
-// Proxy via Vercel (vercel.json): /api/* → http://177.104.185.61:8000/*
-// Resolve Mixed Content: browser fala HTTPS com Vercel,
-// Vercel fala HTTP com a VPS internamente (servidor a servidor).
-const SUPABASE_URL = 'https://disc.vanguardigroup.com.br/api';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
+const SUPABASE_URL = 'https://alwpwpufxwokruysmlln.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsd3B3cHVmeHdva3J1eXNtbGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjUzMzcsImV4cCI6MjA4NTkwMTMzN30.s0zW6cpjlC0m-s8wJNeVSssgXVMEZFVqc4ekgs-6l5Y';
 
 // ==========================================
 // ADMIN CONFIGURATION
@@ -54,8 +51,6 @@ async function supabaseRequest(endpoint, options = {}) {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
-        'Accept-Profile': 'disc_vanguardia',
-        'Content-Profile': 'disc_vanguardia',
         'Prefer': options.prefer || 'return=representation'
     };
 
@@ -116,7 +111,7 @@ async function deleteFromSupabase(id) {
 }
 
 async function deleteAllFromSupabase(projectId = null) {
-    let endpoint = projectId
+    const endpoint = projectId
         ? `disc_assessments?id=gt.0&project_id=eq.${projectId}`
         : 'disc_assessments?id=gt.0';
     return await supabaseRequest(endpoint, { method: 'DELETE' });
@@ -140,7 +135,9 @@ async function deleteProject(id) {
     return await supabaseRequest(`projects?id=eq.${id}`, { method: 'DELETE' });
 }
 
-// Convert Supabase format to app format
+// ==========================================
+// DATA FORMAT CONVERSION
+// ==========================================
 function convertSupabaseToAppFormat(record) {
     return {
         id: record.id,
@@ -190,12 +187,10 @@ function initNavigation() {
 }
 
 function showPage(pageName) {
-    // Check admin access
     if (pageName === 'admin' && !isAdminLoggedIn) {
         pageName = 'admin-login';
     }
 
-    // Update navigation
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.page === pageName) {
@@ -203,7 +198,6 @@ function showPage(pageName) {
         }
     });
 
-    // Update pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
@@ -213,7 +207,6 @@ function showPage(pageName) {
         targetPage.classList.add('active');
     }
 
-    // Load specific page data
     if (pageName === 'admin' && isAdminLoggedIn) {
         loadAdminData();
     }
@@ -251,7 +244,6 @@ function checkAdminSession() {
     const loggedIn = sessionStorage.getItem('adminLoggedIn');
     const loginTime = sessionStorage.getItem('adminLoginTime');
 
-    // Session expires after 2 hours
     if (loggedIn === 'true' && loginTime) {
         const elapsed = Date.now() - parseInt(loginTime);
         const twoHours = 2 * 60 * 60 * 1000;
@@ -289,11 +281,9 @@ function initCandidateForm() {
                 department: document.getElementById('candidateDepartment').value || ''
             };
 
-            // Hide form, show questions
             document.getElementById('candidate-form').classList.add('hidden');
             document.getElementById('questions-section').classList.remove('hidden');
 
-            // Reset and start assessment
             currentQuestion = 0;
             answers = {};
             renderQuestion();
@@ -308,12 +298,10 @@ function renderQuestion() {
     const question = discQuestions[currentQuestion];
     const container = document.getElementById('question-container');
 
-    // Update progress
     const progress = ((currentQuestion + 1) / discQuestions.length) * 100;
     document.getElementById('progressFill').style.width = `${progress}%`;
     document.getElementById('progressText').textContent = `Pergunta ${currentQuestion + 1} de ${discQuestions.length}`;
 
-    // Render question
     container.innerHTML = `
         <p class="question-text">${question.text}</p>
         <div class="options-container">
@@ -331,7 +319,6 @@ function renderQuestion() {
         </div>
     `;
 
-    // Update navigation buttons
     document.getElementById('prevBtn').disabled = currentQuestion === 0;
 
     const nextBtn = document.getElementById('nextBtn');
@@ -356,7 +343,6 @@ function previousQuestion() {
 function nextQuestion() {
     const question = discQuestions[currentQuestion];
 
-    // Validate answer
     if (answers[question.id] === undefined) {
         alert('Por favor, selecione uma opção antes de continuar.');
         return;
@@ -384,25 +370,19 @@ async function finishAssessment() {
         answers: { ...answers }
     };
 
-    // Show loading state
     const nextBtn = document.getElementById('nextBtn');
     nextBtn.disabled = true;
     nextBtn.textContent = 'Salvando...';
 
     try {
-        // Save to Supabase
         await saveToSupabase(result);
         console.log('Resultado salvo no Supabase com sucesso!');
     } catch (error) {
         console.error('Erro ao salvar no Supabase:', error);
-        // Continue anyway - show results to user
     }
 
-    // Show results page
     showCandidateResults(result);
     showPage('results');
-
-    // Reset form for next candidate
     resetAssessmentForm();
 }
 
@@ -419,7 +399,6 @@ function calculateScores() {
         }
     });
 
-    // Convert to percentages
     const total = totals.D + totals.I + totals.S + totals.C;
     return {
         D: Math.round((totals.D / total) * 100),
@@ -444,7 +423,7 @@ function getDominantProfile(scores) {
 }
 
 // ==========================================
-// STORAGE (now uses Supabase)
+// STORAGE
 // ==========================================
 async function getAllResults() {
     try {
@@ -474,40 +453,28 @@ function showCandidateResults(result) {
     document.getElementById('no-results').classList.add('hidden');
     document.getElementById('results-content').classList.remove('hidden');
 
-    // Header info
     document.getElementById('resultCandidateName').textContent = result.candidate.name;
     document.getElementById('resultDate').textContent = `Avaliação realizada em: ${formatDateTime(result.date)}`;
 
-    // Scores
     document.getElementById('scoreD').textContent = `${result.scores.D}%`;
     document.getElementById('scoreI').textContent = `${result.scores.I}%`;
     document.getElementById('scoreS').textContent = `${result.scores.S}%`;
     document.getElementById('scoreC').textContent = `${result.scores.C}%`;
 
-    // Profile info
     const profile = profileData[result.dominantProfile];
     document.getElementById('dominantProfile').textContent = profile.name;
     document.getElementById('profileDescription').textContent = profile.description;
 
-    // Strengths
-    const strengthsList = document.getElementById('strengths');
-    strengthsList.innerHTML = profile.strengths.map(s => `<li>${s}</li>`).join('');
-
-    // Improvements
-    const improvementsList = document.getElementById('improvements');
-    improvementsList.innerHTML = profile.improvements.map(i => `<li>${i}</li>`).join('');
-
-    // Recommendations
+    document.getElementById('strengths').innerHTML = profile.strengths.map(s => `<li>${s}</li>`).join('');
+    document.getElementById('improvements').innerHTML = profile.improvements.map(i => `<li>${i}</li>`).join('');
     document.getElementById('recommendations').textContent = profile.recommendations;
 
-    // Chart
     renderChart('discChart', result.scores, 'discChart');
 }
 
 function renderChart(canvasId, scores, chartVar) {
     const ctx = document.getElementById(canvasId).getContext('2d');
 
-    // Destroy existing chart if exists
     if (chartVar === 'discChart' && discChart) {
         discChart.destroy();
     } else if (chartVar === 'adminDiscChart' && adminDiscChart) {
@@ -536,15 +503,11 @@ function renderChart(canvasId, scores, chartVar) {
                 r: {
                     beginAtZero: true,
                     max: 100,
-                    ticks: {
-                        stepSize: 20
-                    }
+                    ticks: { stepSize: 20 }
                 }
             },
             plugins: {
-                legend: {
-                    display: false
-                }
+                legend: { display: false }
             }
         }
     });
@@ -568,7 +531,6 @@ function resetAssessmentForm() {
     document.getElementById('candidate-form').classList.remove('hidden');
     document.getElementById('questions-section').classList.add('hidden');
 
-    // Reset button state
     const nextBtn = document.getElementById('nextBtn');
     nextBtn.disabled = false;
     nextBtn.textContent = 'Próxima →';
@@ -581,7 +543,6 @@ async function loadAdminData() {
     document.getElementById('totalAssessments').textContent = '...';
 
     try {
-        // Load projects for filter dropdown
         await loadProjectsFilter();
 
         const results = filteredResults || await getAllResults();
@@ -634,7 +595,7 @@ async function loadAdminData() {
 }
 
 // ==========================================
-// PROJECT MANAGEMENT FUNCTIONS
+// PROJECT MANAGEMENT
 // ==========================================
 async function loadProjectsFilter() {
     try {
@@ -659,7 +620,7 @@ function renderProjectsManager() {
     if (!container) return;
 
     if (allProjects.length === 0) {
-        container.innerHTML = '<p class="no-data-message">Nenhum projeto criado.</p>';
+        container.innerHTML = '<p class="no-data-message">Nenhum projeto criado ainda.</p>';
         return;
     }
 
@@ -746,32 +707,23 @@ function viewResult(id) {
 }
 
 function showAdminResultView(result) {
-    // Header info
     document.getElementById('adminResultCandidateName').textContent = result.candidate.name;
     document.getElementById('adminResultEmail').textContent = result.candidate.email;
     document.getElementById('adminResultDate').textContent = `Avaliação: ${formatDateTime(result.date)}`;
 
-    // Scores
     document.getElementById('adminScoreD').textContent = `${result.scores.D}%`;
     document.getElementById('adminScoreI').textContent = `${result.scores.I}%`;
     document.getElementById('adminScoreS').textContent = `${result.scores.S}%`;
     document.getElementById('adminScoreC').textContent = `${result.scores.C}%`;
 
-    // Profile info
     const profile = profileData[result.dominantProfile];
     document.getElementById('adminDominantProfile').textContent = profile.name;
     document.getElementById('adminProfileDescription').textContent = profile.description;
 
-    // Strengths
     document.getElementById('adminStrengths').innerHTML = profile.strengths.map(s => `<li>${s}</li>`).join('');
-
-    // Improvements
     document.getElementById('adminImprovements').innerHTML = profile.improvements.map(i => `<li>${i}</li>`).join('');
-
-    // Recommendations
     document.getElementById('adminRecommendations').textContent = profile.recommendations;
 
-    // Chart
     renderChart('adminDiscChart', result.scores, 'adminDiscChart');
 }
 
@@ -788,6 +740,9 @@ async function deleteResult() {
     }
 }
 
+// ==========================================
+// PDF EXPORT
+// ==========================================
 function printAdminResults() {
     const result = currentViewingResult;
     if (!result) return;
@@ -845,8 +800,14 @@ function printAdminResults() {
 <body>
 <div class="page">
   <div class="header">
-    <div><h1>Relatório de Avaliação DISC</h1><div style="font-size:13px;color:#666;margin-top:4px;">Vanguardia Grupo</div></div>
-    <div class="date">${formatDateTime(result.date)}<br>${result.projectName ? `Projeto: ${result.projectName}` : ''}</div>
+    <div>
+      <h1>Relatório de Avaliação DISC</h1>
+      <div style="font-size:13px;color:#666;margin-top:4px;">Vanguardia Grupo</div>
+    </div>
+    <div class="date">
+      ${formatDateTime(result.date)}
+      ${result.projectName ? `<br>Projeto: ${result.projectName}` : ''}
+    </div>
   </div>
 
   <div class="candidate-info">
@@ -978,7 +939,6 @@ async function exportToExcel() {
         return;
     }
 
-    // Prepare data for Excel
     const data = results.map(r => {
         const profile = profileData[r.dominantProfile];
         return {
@@ -1001,18 +961,15 @@ async function exportToExcel() {
         };
     });
 
-    // Create workbook
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Avaliações DISC');
 
-    // Auto-width columns
     const colWidths = Object.keys(data[0]).map(key => ({
         wch: Math.max(key.length, ...data.map(row => String(row[key]).length))
     }));
     ws['!cols'] = colWidths;
 
-    // Download
     XLSX.writeFile(wb, `vanguardia_disc_${getDateString()}.xlsx`);
 }
 

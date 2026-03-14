@@ -1,15 +1,11 @@
 -- VANGUARDIA DISC - Setup do banco de dados
--- Execute no SQL Editor do Supabase (schema: disc_vanguardia)
-
--- ============================================================
--- SCHEMA
--- ============================================================
-CREATE SCHEMA IF NOT EXISTS disc_vanguardia;
+-- Execute no SQL Editor do Supabase Cloud
+-- Projeto: https://alwpwpufxwokruysmlln.supabase.co
 
 -- ============================================================
 -- TABELA: projects
 -- ============================================================
-CREATE TABLE IF NOT EXISTS disc_vanguardia.projects (
+CREATE TABLE IF NOT EXISTS public.projects (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     name TEXT NOT NULL,
@@ -20,10 +16,10 @@ CREATE TABLE IF NOT EXISTS disc_vanguardia.projects (
 -- ============================================================
 -- TABELA: disc_assessments
 -- ============================================================
-CREATE TABLE IF NOT EXISTS disc_vanguardia.disc_assessments (
+CREATE TABLE IF NOT EXISTS public.disc_assessments (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    project_id BIGINT REFERENCES disc_vanguardia.projects(id),
+    project_id BIGINT REFERENCES public.projects(id),
     candidate_name TEXT NOT NULL,
     candidate_email TEXT NOT NULL,
     candidate_phone TEXT,
@@ -40,36 +36,29 @@ CREATE TABLE IF NOT EXISTS disc_vanguardia.disc_assessments (
 -- ============================================================
 -- ÍNDICES
 -- ============================================================
-CREATE INDEX IF NOT EXISTS idx_disc_email      ON disc_vanguardia.disc_assessments(candidate_email);
-CREATE INDEX IF NOT EXISTS idx_disc_created    ON disc_vanguardia.disc_assessments(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_disc_profile    ON disc_vanguardia.disc_assessments(dominant_profile);
-CREATE INDEX IF NOT EXISTS idx_disc_project    ON disc_vanguardia.disc_assessments(project_id);
+CREATE INDEX IF NOT EXISTS idx_disc_email   ON public.disc_assessments(candidate_email);
+CREATE INDEX IF NOT EXISTS idx_disc_created ON public.disc_assessments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_disc_profile ON public.disc_assessments(dominant_profile);
+CREATE INDEX IF NOT EXISTS idx_disc_project ON public.disc_assessments(project_id);
 
 -- ============================================================
 -- RLS: projects
 -- ============================================================
-ALTER TABLE disc_vanguardia.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "proj_anon_select" ON disc_vanguardia.projects FOR SELECT TO anon USING (true);
-CREATE POLICY "proj_anon_insert" ON disc_vanguardia.projects FOR INSERT TO anon WITH CHECK (true);
-CREATE POLICY "proj_anon_update" ON disc_vanguardia.projects FOR UPDATE TO anon USING (true);
-CREATE POLICY "proj_anon_delete" ON disc_vanguardia.projects FOR DELETE TO anon USING (true);
+CREATE POLICY "proj_anon_select" ON public.projects FOR SELECT TO anon USING (true);
+CREATE POLICY "proj_anon_insert" ON public.projects FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "proj_anon_update" ON public.projects FOR UPDATE TO anon USING (true);
+CREATE POLICY "proj_anon_delete" ON public.projects FOR DELETE TO anon USING (true);
 
 -- ============================================================
 -- RLS: disc_assessments
 -- ============================================================
-ALTER TABLE disc_vanguardia.disc_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.disc_assessments ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "anon_insert"     ON disc_vanguardia.disc_assessments FOR INSERT TO anon WITH CHECK (true);
-CREATE POLICY "anon_select_all" ON disc_vanguardia.disc_assessments FOR SELECT TO anon USING (true);
-CREATE POLICY "anon_delete"     ON disc_vanguardia.disc_assessments FOR DELETE TO anon USING (true);
-
--- ============================================================
--- PROJETO PADRÃO
--- ============================================================
-INSERT INTO disc_vanguardia.projects (name, description)
-VALUES ('DISC - Vanguardia', 'Projeto padrão de avaliações DISC')
-ON CONFLICT DO NOTHING;
+CREATE POLICY "anon_insert"     ON public.disc_assessments FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "anon_select_all" ON public.disc_assessments FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_delete"     ON public.disc_assessments FOR DELETE TO anon USING (true);
 
 -- ============================================================
 -- MIGRAÇÃO: adicionar project_id se tabela já existia
@@ -78,21 +67,26 @@ DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'disc_vanguardia'
+        WHERE table_schema = 'public'
           AND table_name   = 'disc_assessments'
           AND column_name  = 'project_id'
     ) THEN
-        ALTER TABLE disc_vanguardia.disc_assessments
-            ADD COLUMN project_id BIGINT REFERENCES disc_vanguardia.projects(id);
-        CREATE INDEX idx_disc_project ON disc_vanguardia.disc_assessments(project_id);
+        ALTER TABLE public.disc_assessments
+            ADD COLUMN project_id BIGINT REFERENCES public.projects(id);
     END IF;
 END
 $$;
 
 -- ============================================================
+-- PROJETO PADRÃO
+-- ============================================================
+INSERT INTO public.projects (name, description)
+VALUES ('DISC - Vanguardia', 'Projeto padrão de avaliações DISC')
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
 -- VERIFICAÇÃO
 -- ============================================================
-SELECT table_schema, table_name
-FROM information_schema.tables
-WHERE table_schema = 'disc_vanguardia'
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name IN ('projects', 'disc_assessments')
 ORDER BY table_name;
