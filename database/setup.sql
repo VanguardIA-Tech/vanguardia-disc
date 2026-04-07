@@ -1,6 +1,6 @@
 -- VANGUARDIA DISC - Setup do banco de dados
--- Execute no SQL Editor do Supabase Cloud
--- Projeto: https://alwpwpufxwokruysmlln.supabase.co
+-- Execute no SQL Editor do Supabase (VPS: 177.104.185.61:8000)
+-- Dashboard: http://177.104.185.61:8000 | user: supabase | pass: V@nguardia2026
 
 -- ============================================================
 -- TABELA: projects

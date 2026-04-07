@@ -1,4 +1,10 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/supabase/:path*",
+      "destination": "http://177.104.185.61:8000/:path*"
+    }
+  ]
 }
