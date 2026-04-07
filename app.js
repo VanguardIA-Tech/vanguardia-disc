@@ -1,10 +1,20 @@
 // DISC Assessment Application for Vanguardia
-// Version 5.0 - PHP Backend + MariaDB + JWT Auth
+// Version 5.1 - Supabase VPS via subdomínio HTTPS
 
 // ==========================================
-// API CONFIGURATION
+// SUPABASE CONFIGURATION
 // ==========================================
-const API_BASE = '/api';
+// Subdomínio: supabase.vanguardiagrupo.com.br → VPS:8000 (via Coolify reverse proxy)
+const SUPABASE_URL = 'https://supabase.vanguardiagrupo.com.br';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
+
+// ==========================================
+// ADMIN CONFIGURATION
+// ==========================================
+const ADMIN_CREDENTIALS = {
+    username: 'admin',
+    password: 'Vanguardia@2024'
+};
 
 // ==========================================
 // STATE MANAGEMENT
@@ -34,34 +44,39 @@ function readProjectFromUrl() {
 }
 
 // ==========================================
-// API FUNCTIONS (PHP Backend + MariaDB)
+// SUPABASE API FUNCTIONS
 // ==========================================
-function getAdminToken() {
-    return sessionStorage.getItem('adminToken') || null;
-}
-
-async function apiRequest(path, options = {}) {
-    const url = `${API_BASE}${path}`;
-    const headers = { 'Content-Type': 'application/json' };
-    const token = getAdminToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+async function supabaseRequest(endpoint, options = {}) {
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': options.prefer || 'return=representation'
+    };
 
     try {
-        const response = await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
+        const response = await fetch(url, {
+            ...options,
+            headers: { ...headers, ...options.headers }
+        });
+
         if (!response.ok) {
-            const error = await response.json().catch(() => ({}));
-            throw new Error(error.error || `Erro ${response.status}`);
+            const error = await response.json();
+            console.error('Supabase error:', error);
+            throw new Error(error.message || 'Erro na requisição');
         }
+
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch (error) {
-        console.error('API error:', error);
+        console.error('Request error:', error);
         throw error;
     }
 }
 
 async function saveToSupabase(result) {
-    return await apiRequest('/assessments', {
+    return await supabaseRequest('disc_assessments', {
         method: 'POST',
         body: JSON.stringify({
             project_id:           currentProjectId || null,
@@ -81,36 +96,38 @@ async function saveToSupabase(result) {
 }
 
 async function fetchFromSupabase(projectId = null) {
-    let path = '/assessments';
-    if (projectId) path += `?project_id=${projectId}`;
-    return await apiRequest(path);
+    let query = 'disc_assessments?select=*,projects(name)&order=created_at.desc';
+    if (projectId) query += `&project_id=eq.${projectId}`;
+    return await supabaseRequest(query);
 }
 
 async function deleteFromSupabase(id) {
-    return await apiRequest(`/assessments/${id}`, { method: 'DELETE' });
+    return await supabaseRequest(`disc_assessments?id=eq.${id}`, { method: 'DELETE' });
 }
 
 async function deleteAllFromSupabase(projectId = null) {
-    const path = projectId ? `/assessments?project_id=${projectId}` : '/assessments?all=1';
-    return await apiRequest(path, { method: 'DELETE' });
+    const endpoint = projectId
+        ? `disc_assessments?id=gt.0&project_id=eq.${projectId}`
+        : 'disc_assessments?id=gt.0';
+    return await supabaseRequest(endpoint, { method: 'DELETE' });
 }
 
 // ==========================================
-// PROJECTS API FUNCTIONS
+// PROJECTS SUPABASE FUNCTIONS
 // ==========================================
 async function fetchProjects() {
-    return await apiRequest('/projects');
+    return await supabaseRequest('projects?select=*&order=created_at.asc');
 }
 
 async function createProject(name, description) {
-    return await apiRequest('/projects', {
+    return await supabaseRequest('projects', {
         method: 'POST',
-        body: JSON.stringify({ name, description: description || null })
+        body: JSON.stringify({ name, description: description || null, is_active: true })
     });
 }
 
 async function deleteProject(id) {
-    return await apiRequest(`/projects/${id}`, { method: 'DELETE' });
+    return await supabaseRequest(`projects?id=eq.${id}`, { method: 'DELETE' });
 }
 
 // ==========================================
@@ -121,7 +138,7 @@ function convertSupabaseToAppFormat(record) {
         id: record.id,
         date: record.created_at,
         projectId: record.project_id,
-        projectName: record.project_name || null,
+        projectName: record.projects ? record.projects.name : null,
         candidate: {
             name: record.candidate_name,
             email: record.candidate_email,
@@ -200,38 +217,29 @@ function initAdminLogin() {
     }
 }
 
-async function handleAdminLogin(e) {
+function handleAdminLogin(e) {
     e.preventDefault();
 
     const username = document.getElementById('adminUser').value;
     const password = document.getElementById('adminPassword').value;
     const errorDiv = document.getElementById('loginError');
 
-    try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        if (!res.ok) throw new Error('Credenciais inválidas');
-
-        const { token } = await res.json();
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
         isAdminLoggedIn = true;
-        sessionStorage.setItem('adminToken', token);
+        sessionStorage.setItem('adminLoggedIn', 'true');
         sessionStorage.setItem('adminLoginTime', Date.now().toString());
         errorDiv.classList.add('hidden');
         showPage('admin');
-    } catch {
+    } else {
         errorDiv.classList.remove('hidden');
     }
 }
 
 function checkAdminSession() {
-    const token = sessionStorage.getItem('adminToken');
+    const loggedIn = sessionStorage.getItem('adminLoggedIn');
     const loginTime = sessionStorage.getItem('adminLoginTime');
 
-    if (token && loginTime) {
+    if (loggedIn === 'true' && loginTime) {
         const elapsed = Date.now() - parseInt(loginTime);
         const twoHours = 2 * 60 * 60 * 1000;
 
@@ -245,7 +253,7 @@ function checkAdminSession() {
 
 function adminLogout() {
     isAdminLoggedIn = false;
-    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminLoggedIn');
     sessionStorage.removeItem('adminLoginTime');
     document.getElementById('adminLoginForm').reset();
     showPage('home');
