@@ -1,21 +1,10 @@
 // DISC Assessment Application for Vanguardia
-// Version 4.1 - Supabase VPS via Vercel Proxy
+// Version 5.0 - PHP Backend + MariaDB + JWT Auth
 
 // ==========================================
-// SUPABASE CONFIGURATION
+// API CONFIGURATION
 // ==========================================
-// Vercel proxy: /supabase/* → http://177.104.185.61:8000/*
-// Evita Mixed Content (HTTPS→HTTP) usando proxy server-side do Vercel
-const SUPABASE_URL = '/supabase';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
-
-// ==========================================
-// ADMIN CONFIGURATION
-// ==========================================
-const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'Vanguardia@2024'
-};
+const API_BASE = '/api';
 
 // ==========================================
 // STATE MANAGEMENT
@@ -45,96 +34,83 @@ function readProjectFromUrl() {
 }
 
 // ==========================================
-// SUPABASE API FUNCTIONS
+// API FUNCTIONS (PHP Backend + MariaDB)
 // ==========================================
-async function supabaseRequest(endpoint, options = {}) {
-    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-    const headers = {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': options.prefer || 'return=representation'
-    };
+function getAdminToken() {
+    return sessionStorage.getItem('adminToken') || null;
+}
+
+async function apiRequest(path, options = {}) {
+    const url = `${API_BASE}${path}`;
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getAdminToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     try {
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...headers, ...options.headers }
-        });
-
+        const response = await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
         if (!response.ok) {
-            const error = await response.json();
-            console.error('Supabase error:', error);
-            throw new Error(error.message || 'Erro na requisição');
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || `Erro ${response.status}`);
         }
-
         const text = await response.text();
         return text ? JSON.parse(text) : null;
     } catch (error) {
-        console.error('Request error:', error);
+        console.error('API error:', error);
         throw error;
     }
 }
 
 async function saveToSupabase(result) {
-    const data = {
-        project_id: currentProjectId || null,
-        candidate_name: result.candidate.name,
-        candidate_email: result.candidate.email,
-        candidate_phone: result.candidate.phone || null,
-        candidate_position: result.candidate.position || null,
-        candidate_department: result.candidate.department || null,
-        score_d: result.scores.D,
-        score_i: result.scores.I,
-        score_s: result.scores.S,
-        score_c: result.scores.C,
-        dominant_profile: result.dominantProfile,
-        answers: result.answers
-    };
-
-    return await supabaseRequest('disc_assessments', {
+    return await apiRequest('/assessments', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+            project_id:           currentProjectId || null,
+            candidate_name:       result.candidate.name,
+            candidate_email:      result.candidate.email,
+            candidate_phone:      result.candidate.phone || null,
+            candidate_position:   result.candidate.position || null,
+            candidate_department: result.candidate.department || null,
+            score_d:              result.scores.D,
+            score_i:              result.scores.I,
+            score_s:              result.scores.S,
+            score_c:              result.scores.C,
+            dominant_profile:     result.dominantProfile,
+            answers:              result.answers
+        })
     });
 }
 
 async function fetchFromSupabase(projectId = null) {
-    let query = 'disc_assessments?select=*,projects(name)&order=created_at.desc';
-    if (projectId) {
-        query += `&project_id=eq.${projectId}`;
-    }
-    return await supabaseRequest(query);
+    let path = '/assessments';
+    if (projectId) path += `?project_id=${projectId}`;
+    return await apiRequest(path);
 }
 
 async function deleteFromSupabase(id) {
-    return await supabaseRequest(`disc_assessments?id=eq.${id}`, {
-        method: 'DELETE'
-    });
+    return await apiRequest(`/assessments/${id}`, { method: 'DELETE' });
 }
 
 async function deleteAllFromSupabase(projectId = null) {
-    const endpoint = projectId
-        ? `disc_assessments?id=gt.0&project_id=eq.${projectId}`
-        : 'disc_assessments?id=gt.0';
-    return await supabaseRequest(endpoint, { method: 'DELETE' });
+    const path = projectId ? `/assessments?project_id=${projectId}` : '/assessments?all=1';
+    return await apiRequest(path, { method: 'DELETE' });
 }
 
 // ==========================================
-// PROJECTS SUPABASE FUNCTIONS
+// PROJECTS API FUNCTIONS
 // ==========================================
 async function fetchProjects() {
-    return await supabaseRequest('projects?select=*&order=created_at.asc');
+    return await apiRequest('/projects');
 }
 
 async function createProject(name, description) {
-    return await supabaseRequest('projects', {
+    return await apiRequest('/projects', {
         method: 'POST',
-        body: JSON.stringify({ name, description: description || null, is_active: true })
+        body: JSON.stringify({ name, description: description || null })
     });
 }
 
 async function deleteProject(id) {
-    return await supabaseRequest(`projects?id=eq.${id}`, { method: 'DELETE' });
+    return await apiRequest(`/projects/${id}`, { method: 'DELETE' });
 }
 
 // ==========================================
@@ -145,7 +121,7 @@ function convertSupabaseToAppFormat(record) {
         id: record.id,
         date: record.created_at,
         projectId: record.project_id,
-        projectName: record.projects ? record.projects.name : null,
+        projectName: record.project_name || null,
         candidate: {
             name: record.candidate_name,
             email: record.candidate_email,
@@ -224,29 +200,38 @@ function initAdminLogin() {
     }
 }
 
-function handleAdminLogin(e) {
+async function handleAdminLogin(e) {
     e.preventDefault();
 
     const username = document.getElementById('adminUser').value;
     const password = document.getElementById('adminPassword').value;
     const errorDiv = document.getElementById('loginError');
 
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (!res.ok) throw new Error('Credenciais inválidas');
+
+        const { token } = await res.json();
         isAdminLoggedIn = true;
-        sessionStorage.setItem('adminLoggedIn', 'true');
+        sessionStorage.setItem('adminToken', token);
         sessionStorage.setItem('adminLoginTime', Date.now().toString());
         errorDiv.classList.add('hidden');
         showPage('admin');
-    } else {
+    } catch {
         errorDiv.classList.remove('hidden');
     }
 }
 
 function checkAdminSession() {
-    const loggedIn = sessionStorage.getItem('adminLoggedIn');
+    const token = sessionStorage.getItem('adminToken');
     const loginTime = sessionStorage.getItem('adminLoginTime');
 
-    if (loggedIn === 'true' && loginTime) {
+    if (token && loginTime) {
         const elapsed = Date.now() - parseInt(loginTime);
         const twoHours = 2 * 60 * 60 * 1000;
 
@@ -260,7 +245,7 @@ function checkAdminSession() {
 
 function adminLogout() {
     isAdminLoggedIn = false;
-    sessionStorage.removeItem('adminLoggedIn');
+    sessionStorage.removeItem('adminToken');
     sessionStorage.removeItem('adminLoginTime');
     document.getElementById('adminLoginForm').reset();
     showPage('home');
