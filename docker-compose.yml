@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      # Conexão com MariaDB
+      DB_HOST: ${DB_HOST:-mariadb}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-disc_vanguardia}
+      DB_USER: ${DB_USER:-disc_user}
+      DB_PASS: ${DB_PASS:-DiscVanguardia@2024}
+      # Autenticação admin
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Vanguardia@2024}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-vanguardia-jwt-secret-mude-em-producao}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - disc-net
+
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-RootVanguardia@2024}
+      MARIADB_DATABASE: ${DB_NAME:-disc_vanguardia}
+      MARIADB_USER: ${DB_USER:-disc_user}
+      MARIADB_PASSWORD: ${DB_PASS:-DiscVanguardia@2024}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/mariadb-setup.sql:/docker-entrypoint-initdb.d/setup.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - disc-net
+
+volumes:
+  mariadb_data:
+
+networks:
+  disc-net:
+    driver: bridge
