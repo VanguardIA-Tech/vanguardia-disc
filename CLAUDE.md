@@ -17,14 +17,19 @@ Sistema de avaliação comportamental DISC (Dominância, Influência, Estabilida
 vanguardia-disc/
 ├── index.html      # Página única com todas as seções (home, avaliação, resultados, admin-login, admin, admin-view)
 ├── styles.css      # Estilos CSS com variáveis de branding e responsividade
-├── app.js          # Lógica principal (~827 linhas): navegação, formulários, API Supabase, gráficos, admin
+├── app.js          # Lógica principal (~1021 linhas): navegação, formulários, API Supabase, gráficos, admin e projetos
 ├── questions.js    # 28 perguntas DISC (7 por dimensão) + dados dos 4 perfis comportamentais
 ├── logo.png        # Logo oficial da Vanguardia
+├── database/       # Scripts do banco Supabase/PostgreSQL e MariaDB
+├── backend/        # API PHP opcional para deploy Docker/MariaDB
+├── Dockerfile      # Imagem PHP/Apache opcional
+├── docker-compose.yml
+├── vercel.json     # Configuração do deploy estático na Vercel
 ├── README.md       # Documentação do projeto
 └── CLAUDE.md       # Este arquivo
 ```
 
-**Não há:** package.json, node_modules, build tools, frameworks, TypeScript, testes, CI/CD, Docker, configs de lint.
+**Não há:** package.json, node_modules, build tools, frameworks, TypeScript, testes automatizados, CI/CD, configs de lint.
 
 ## Arquitetura e Padrões
 
@@ -55,6 +60,9 @@ isAdminLoggedIn    // Boolean de autenticação
 allResults         // Cache de todas avaliações do Supabase
 filteredResults    // Resultados filtrados por data
 currentViewingResult // Resultado sendo visualizado no admin
+allProjects        // Cache de projetos cadastrados
+currentProjectId   // Projeto vindo de ?project=ID
+adminFilterProjectId // Filtro de projeto no admin
 ```
 
 ### Comunicação com Supabase
@@ -81,7 +89,7 @@ currentViewingResult // Resultado sendo visualizado no admin
 
 - Login com credenciais fixas (hardcoded em app.js)
 - Sessão de 2h via sessionStorage
-- Funcionalidades: listar avaliações, filtrar por data, ver detalhes, excluir, exportar CSV/Excel, imprimir
+- Funcionalidades: listar avaliações, filtrar por data/projeto, ver detalhes, excluir, exportar CSV/Excel, imprimir, criar/excluir projetos e copiar links únicos
 
 ## Convenções de Código
 
@@ -108,7 +116,8 @@ currentViewingResult // Resultado sendo visualizado no admin
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | uuid | PK, gerado automaticamente |
+| id | bigserial | PK, gerado automaticamente |
+| project_id | bigint | FK opcional para `projects(id)` |
 | candidate_name | text | Nome do candidato |
 | candidate_email | text | Email |
 | candidate_phone | text | Telefone (opcional) |

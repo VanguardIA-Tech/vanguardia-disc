@@ -18,9 +18,11 @@ Sistema de avaliação DISC completo para análise de perfil comportamental de n
 - **Senha:** `Vanguardia@2024`
 
 ### Supabase (Banco de Dados)
-- **Project URL:** `https://alwpwpufxwokruysmlln.supabase.co`
-- **Anon Key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsd3B3cHVmeHdva3J1eXNtbGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMjUzMzcsImV4cCI6MjA4NTkwMTMzN30.s0zW6cpjlC0m-s8wJNeVSssgXVMEZFVqc4ekgs-6l5Y`
-- **Tabela:** `disc_assessments`
+- **Project URL:** `https://supabase.vanguardiagrupo.com.br`
+- **Tabela principal:** `disc_assessments`
+- **Tabela auxiliar:** `projects`
+
+> Produção: o endpoint `/rest/v1/*` precisa ficar acessível sem Basic Auth no proxy reverso. A autenticação esperada pelo app é feita pelos headers `apikey` e `Authorization: Bearer`.
 
 ## Estrutura do Projeto
 
@@ -28,9 +30,14 @@ Sistema de avaliação DISC completo para análise de perfil comportamental de n
 vanguardia-disc/
 ├── index.html      # Estrutura HTML (páginas: home, avaliação, resultados, admin)
 ├── styles.css      # Estilos CSS com branding Vanguardia
-├── app.js          # Lógica principal + integração Supabase (v3.0)
+├── app.js          # Lógica principal + integração Supabase (v5.1)
 ├── questions.js    # 28 perguntas DISC + descrições de perfis
 ├── logo.png        # Logo oficial da Vanguardia
+├── database/       # Scripts do banco Supabase/PostgreSQL e MariaDB
+├── backend/        # API PHP opcional para deploy Docker/MariaDB
+├── Dockerfile      # Imagem PHP/Apache opcional
+├── docker-compose.yml
+├── vercel.json     # Configuração do deploy estático na Vercel
 └── README.md       # Este arquivo
 ```
 
@@ -49,11 +56,12 @@ vanguardia-disc/
 - Exportação para Excel (.xlsx) e CSV
 - Visualização detalhada de cada avaliação
 - Exclusão de registros
+- Gestão de projetos e links únicos por projeto
 
 ## Tecnologias
 
 - **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
-- **Banco de Dados:** Supabase (PostgreSQL)
+- **Banco de Dados:** Supabase self-hosted (PostgreSQL via REST)
 - **Gráficos:** Chart.js
 - **Exportação:** SheetJS (xlsx)
 - **Hospedagem:** Vercel
@@ -85,15 +93,16 @@ Tabela `disc_assessments`:
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| id | uuid | Identificador único |
+| id | bigserial | Identificador único |
+| project_id | bigint | Projeto vinculado, opcional |
 | candidate_name | text | Nome do candidato |
 | candidate_email | text | Email do candidato |
 | candidate_position | text | Cargo pretendido |
-| d_score | integer | Pontuação Dominância (0-100) |
-| i_score | integer | Pontuação Influência (0-100) |
-| s_score | integer | Pontuação Estabilidade (0-100) |
-| c_score | integer | Pontuação Conformidade (0-100) |
-| primary_profile | text | Perfil predominante |
+| score_d | integer | Pontuação Dominância (0-100) |
+| score_i | integer | Pontuação Influência (0-100) |
+| score_s | integer | Pontuação Estabilidade (0-100) |
+| score_c | integer | Pontuação Conformidade (0-100) |
+| dominant_profile | text | Perfil predominante |
 | answers | jsonb | Respostas detalhadas |
 | created_at | timestamp | Data/hora da avaliação |
 

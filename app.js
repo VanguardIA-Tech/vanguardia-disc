@@ -61,14 +61,23 @@ async function supabaseRequest(endpoint, options = {}) {
             headers: { ...headers, ...options.headers }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            console.error('Supabase error:', error);
-            throw new Error(error.message || 'Erro na requisição');
+        const text = await response.text();
+        let data = null;
+        if (text) {
+            try {
+                data = JSON.parse(text);
+            } catch (_) {
+                data = null;
+            }
         }
 
-        const text = await response.text();
-        return text ? JSON.parse(text) : null;
+        if (!response.ok) {
+            const message = data?.message || data?.error || text || `Erro HTTP ${response.status}`;
+            console.error('Supabase error:', data || text);
+            throw new Error(message);
+        }
+
+        return data;
     } catch (error) {
         console.error('Request error:', error);
         throw error;
@@ -369,14 +378,17 @@ async function finishAssessment() {
     nextBtn.disabled = true;
     nextBtn.textContent = 'Salvando...';
 
+    let savedSuccessfully = false;
+
     try {
         await saveToSupabase(result);
+        savedSuccessfully = true;
         console.log('Resultado salvo no Supabase com sucesso!');
     } catch (error) {
         console.error('Erro ao salvar no Supabase:', error);
     }
 
-    showCandidateResults(result);
+    showCandidateResults(result, savedSuccessfully);
     showPage('results');
     resetAssessmentForm();
 }
@@ -444,7 +456,7 @@ async function deleteResultById(id) {
 // ==========================================
 // CANDIDATE RESULTS DISPLAY
 // ==========================================
-function showCandidateResults(result) {
+function showCandidateResults(result, savedSuccessfully = true) {
     document.getElementById('no-results').classList.add('hidden');
     document.getElementById('results-content').classList.remove('hidden');
 
@@ -463,6 +475,18 @@ function showCandidateResults(result) {
     document.getElementById('strengths').innerHTML = profile.strengths.map(s => `<li>${s}</li>`).join('');
     document.getElementById('improvements').innerHTML = profile.improvements.map(i => `<li>${i}</li>`).join('');
     document.getElementById('recommendations').textContent = profile.recommendations;
+
+    const thankYouTitle = document.querySelector('.thank-you-card h3');
+    const thankYouMessage = document.querySelector('.thank-you-card p');
+    if (thankYouTitle && thankYouMessage) {
+        if (savedSuccessfully) {
+            thankYouTitle.textContent = 'Obrigado por completar a avaliação!';
+            thankYouMessage.textContent = 'Seus dados foram enviados com sucesso para a equipe de RH da Vanguardia.';
+        } else {
+            thankYouTitle.textContent = 'Avaliação concluída';
+            thankYouMessage.textContent = 'Seu resultado foi calculado, mas não foi possível enviar os dados para a equipe de RH. Avise o responsável pelo processo seletivo.';
+        }
+    }
 
     renderChart('discChart', result.scores, 'discChart');
 }
