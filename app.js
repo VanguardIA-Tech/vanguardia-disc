@@ -116,8 +116,8 @@ async function deleteFromSupabase(id) {
 
 async function deleteAllFromSupabase(projectId = null) {
     const endpoint = projectId
-        ? `disc_assessments?id=gt.0&project_id=eq.${projectId}`
-        : 'disc_assessments?id=gt.0';
+        ? `disc_assessments?id=not.is.null&project_id=eq.${projectId}`
+        : 'disc_assessments?id=not.is.null';
     return await supabaseRequest(endpoint, { method: 'DELETE' });
 }
 
@@ -593,7 +593,7 @@ async function loadAdminData() {
                     <td>${result.scores.C}%</td>
                     <td>${profileData[result.dominantProfile].name}</td>
                     <td>
-                        <button class="btn btn-secondary btn-small" onclick="viewResult(${result.id})">Ver</button>
+                        <button class="btn btn-secondary btn-small" onclick="viewResult('${escapeHtml(String(result.id))}')">Ver</button>
                     </td>
                 </tr>
             `).join('');
@@ -716,7 +716,7 @@ function calculateAverages(results) {
 }
 
 function viewResult(id) {
-    const result = allResults.find(r => r.id === id);
+    const result = allResults.find(r => String(r.id) === String(id));
 
     if (result) {
         currentViewingResult = result;
